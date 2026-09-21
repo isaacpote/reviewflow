@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum BusinessType {
+  PHYSIO_OSTEO
+  RESTAURANT
+  TRADIE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+enum ConnectionType {
+  CSV
+  WEBHOOK
+  CLINIKO
+  NOOKAL
+  HUBSPOT
+  GOHIGHLEVEL
+}
+
+enum ContactStatus {
+  PENDING
+  SENT
+  FAILED
+  OPTED_OUT
+}
+
+enum TriggerType {
+  VISIT_COUNT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+
+  businesses Business[]
+}
+
+model Business {
+  id             String       @id @default(cuid())
+  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId        String
+  name           String
+  type           BusinessType
+  reviewLink     String?
+  googlePlaceId       String? // confirmed via Google Business Profile OAuth, not guessed
+  googleLocationName  String?
+  googleConnectedAt   DateTime?
+  abn            String?
+  abnVerifiedName String?
+  abnStatus      String? // Active | Cancelled, from the ABN Lookup
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  phoneNumbers    PhoneNumber[]
+  messageTemplate MessageTemplate?
+  crmConnections  CrmConnection[]
+  contacts        Contact[]
+  reviewRequests  ReviewRequest[]
+  automationRule  AutomationRule?
+}
+
+model PhoneNumber {
+  id                 String             @id @default(cuid())
+  business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId         String
+  phoneNumber        String
+  friendlyName       String
+  alphaSenderId      String?
+  country            String
+  twilioSid          String
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verificationSid    String?
+  isMock             Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+}
+
+model MessageTemplate {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String   @unique
+  body       String
+  updatedAt  DateTime @updatedAt
+}
+
+model CrmConnection {
+  id                  String         @id @default(cuid())
+  business            Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId          String
+  type                ConnectionType
+  name                String
+  fieldMapping        String? // JSON string: { "first_name": "sourceField", ... } — CSV/webhook only
+  webhookToken        String?        @unique
+  credentialsEncrypted String? // AES-GCM encrypted JSON, e.g. { apiKey, shard } — Cliniko/Nookal only
+  lastSyncedAt        DateTime?
+  createdAt           DateTime       @default(now())
+
+  contacts Contact[]
+}
+
+model Contact {
+  id           String         @id @default(cuid())
+  business     Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId   String
+  connection   CrmConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  connectionId String?
+  externalId   String? // patient/customer id in the source system, for resync dedupe
+  firstName    String?
+  lastName     String?
+  phone        String
+  email        String?
+  raw          String? // original JSON payload from source, for debugging/remapping
+  status       ContactStatus  @default(PENDING)
+  visitCount   Int            @default(0) // from CRM sync (e.g. completed appointments)
+  autoSentAtVisitCount Int?   // visitCount when automation last fired, so it only fires once per threshold
+  createdAt    DateTime       @default(now())
+
+  reviewRequests ReviewRequest[]
+}
+
+model AutomationRule {
+  id             String      @id @default(cuid())
+  business       Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId     String      @unique
+  enabled        Boolean     @default(false)
+  triggerType    TriggerType @default(VISIT_COUNT)
+  visitThreshold Int         @default(4)
+  updatedAt      DateTime    @updatedAt
+}
+
+model ReviewRequest {
+  id           String   @id @default(cuid())
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId   String
+  contact      Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId    String
+  messageBody  String
+  status       String // queued | sent | delivered | failed
+  twilioSid    String?
+  errorMessage String?
+  sentAt       DateTime @default(now())
+}
