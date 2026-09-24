@@ -12,6 +12,8 @@ type Connection = {
   lastSyncedAt: string | null;
 };
 
+type Rule = { enabled: boolean; visitThreshold: number };
+
 const NATIVE_CRMS = [
   { key: "HUBSPOT", label: "HubSpot" },
   { key: "GOHIGHLEVEL", label: "GoHighLevel" },
@@ -26,26 +28,31 @@ type Mode = "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | null;
 export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
   const { id: businessId } = use(props.params);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [rule, setRule] = useState<Rule>({ enabled: false, visitThreshold: 4 });
   const [mode, setMode] = useState<Mode>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   function refresh() {
-    fetch(`/api/crm/connection?businessId=${businessId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setConnections(data.connections);
-        setRefreshKey((k) => k + 1);
-      });
+    Promise.all([
+      fetch(`/api/crm/connection?businessId=${businessId}`).then((r) => r.json()),
+      fetch(`/api/automation?businessId=${businessId}`).then((r) => r.json()),
+    ]).then(([connData, ruleData]) => {
+      setConnections(connData.connections);
+      if (ruleData.rule) setRule({ enabled: ruleData.rule.enabled, visitThreshold: ruleData.rule.visitThreshold });
+      setRefreshKey((k) => k + 1);
+    });
   }
 
   useEffect(refresh, [businessId]);
+
+  const hasCrmSync = connections.some((c) => c.type === "CLINIKO" || c.type === "NOOKAL");
 
   return (
     <div className="max-w-3xl space-y-10">
       <section>
         <h2 className="text-lg font-semibold mb-1">Connections</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Where contacts come from. Each connection has its own field mapping.
+          Where contacts come from, and — for Cliniko and Nookal — when a review request fires.
         </p>
         {connections.length === 0 ? (
           <p className="text-sm text-gray-500 border border-dashed border-black/10 dark:border-white/15 rounded-xl p-6 text-center">
@@ -70,9 +77,20 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
                     <SyncButton connectionId={c.id} onSynced={refresh} />
                   )}
                 </div>
+                {(c.type === "CLINIKO" || c.type === "NOOKAL") && (
+                  <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
+                    <TriggerEditor businessId={businessId} rule={rule} onSaved={refresh} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
+        )}
+        {!hasCrmSync && connections.length > 0 && (
+          <p className="text-xs text-gray-500 mt-2">
+            CSV and webhook contacts don&apos;t carry visit history, so they&apos;re sent manually from
+            the dashboard — connect Cliniko or Nookal for automatic sending by visit count.
+          </p>
         )}
       </section>
 
@@ -87,7 +105,7 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
             >
               <div className="text-sm font-medium">Cliniko</div>
               <div className="text-xs text-gray-500 mt-1">
-                Pull patients directly via your Cliniko API key.
+                Pull patients + visit history via your Cliniko API key.
               </div>
             </button>
             <button
@@ -96,7 +114,7 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
             >
               <div className="text-sm font-medium">Nookal</div>
               <div className="text-xs text-gray-500 mt-1">
-                Pull patients directly via your Nookal API key.
+                Pull patients + visit history via your Nookal API key.
               </div>
             </button>
             <button
@@ -121,10 +139,20 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
         )}
 
         {mode === "CLINIKO" && (
-          <ClinikoConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+          <ClinikoConnectionForm
+            businessId={businessId}
+            initialRule={rule}
+            onDone={() => { setMode(null); refresh(); }}
+            onCancel={() => setMode(null)}
+          />
         )}
         {mode === "NOOKAL" && (
-          <NookalConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+          <NookalConnectionForm
+            businessId={businessId}
+            initialRule={rule}
+            onDone={() => { setMode(null); refresh(); }}
+            onCancel={() => setMode(null)}
+          />
         )}
         {mode === "CSV" && (
           <CsvConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
@@ -171,6 +199,119 @@ function WebhookUrl({ token }: { token: string }) {
     >
       {copied ? "Copied!" : "Copy webhook URL"}
     </button>
+  );
+}
+
+/** Checkbox + threshold number input — the actual trigger-selection UI,
+ * reused both inline in each Cliniko/Nookal row and inside their connect forms. */
+function TriggerFields({
+  enabled,
+  setEnabled,
+  threshold,
+  setThreshold,
+}: {
+  enabled: boolean;
+  setEnabled: (v: boolean) => void;
+  threshold: number;
+  setThreshold: (v: number) => void;
+}) {
+  return (
+    <div>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+        <span className="text-sm font-medium">Send the review request automatically</span>
+      </label>
+      {enabled && (
+        <div className="flex items-center gap-2 mt-2 pl-6">
+          <span className="text-sm text-gray-500">After visit #</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            className="w-16 rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-2 py-1 text-sm text-center"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Inline summary + editable trigger settings shown under each Cliniko/Nookal
+ * connection row. The rule is shared across the whole business, so editing it
+ * from any connection updates the same one everyone sees. */
+function TriggerEditor({
+  businessId,
+  rule,
+  onSaved,
+}: {
+  businessId: string;
+  rule: Rule;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [enabled, setEnabled] = useState(rule.enabled);
+  const [threshold, setThreshold] = useState(rule.visitThreshold);
+  const [saving, setSaving] = useState(false);
+
+  function startEditing() {
+    setEnabled(rule.enabled);
+    setThreshold(rule.visitThreshold);
+    setEditing(true);
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      await fetch("/api/automation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, enabled, visitThreshold: threshold }),
+      });
+      onSaved();
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-500">
+          {rule.enabled ? (
+            <>
+              <span className="text-emerald-600 font-medium">Auto-sends</span> after visit #
+              {rule.visitThreshold}
+            </>
+          ) : (
+            "Not automated — send manually from the dashboard"
+          )}
+        </p>
+        <button onClick={startEditing} className="text-[11px] text-gray-500 underline">
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <TriggerFields enabled={enabled} setEnabled={setEnabled} threshold={threshold} setThreshold={setThreshold} />
+      <div className="flex gap-2">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="text-[11px] font-medium rounded-md bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 disabled:opacity-60"
+        >
+          Save
+        </button>
+        <button onClick={() => setEditing(false)} className="text-[11px] text-gray-500">
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -309,6 +450,11 @@ function CsvConnectionForm({
         </div>
       )}
 
+      <p className="text-[11px] text-gray-500">
+        A CSV is a one-time snapshot — these contacts are sent manually from the dashboard, since
+        there&apos;s no ongoing visit data to trigger on automatically.
+      </p>
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-2">
@@ -381,6 +527,11 @@ function WebhookConnectionForm({
         <FieldMappingInputs mapping={mapping} setMapping={setMapping} />
       </div>
 
+      <p className="text-[11px] text-gray-500">
+        Webhook contacts are sent manually from the dashboard — point your automation tool
+        (Zapier/Make) at this URL per event, and trigger sends here once they land.
+      </p>
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-2">
@@ -403,16 +554,20 @@ const CLINIKO_SHARDS = ["au1", "au2", "au3", "au4", "uk1", "us1", "ca1"];
 
 function ClinikoConnectionForm({
   businessId,
+  initialRule,
   onDone,
   onCancel,
 }: {
   businessId: string;
+  initialRule: Rule;
   onDone: () => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState("Cliniko");
   const [apiKey, setApiKey] = useState("");
   const [shard, setShard] = useState("au4");
+  const [autoEnabled, setAutoEnabled] = useState(initialRule.enabled);
+  const [autoThreshold, setAutoThreshold] = useState(initialRule.visitThreshold);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -431,6 +586,11 @@ function ClinikoConnectionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Cliniko.");
+      await fetch("/api/automation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, enabled: autoEnabled, visitThreshold: autoThreshold }),
+      });
       onDone();
     } catch (err) {
       setError((err as Error).message);
@@ -479,6 +639,19 @@ function ClinikoConnectionForm({
         <code>yourclinic.au4.cliniko.com</code>.
       </p>
 
+      <div className="pt-3 border-t border-black/5 dark:border-white/5">
+        <TriggerFields
+          enabled={autoEnabled}
+          setEnabled={setAutoEnabled}
+          threshold={autoThreshold}
+          setThreshold={setAutoThreshold}
+        />
+        <p className="text-[11px] text-gray-500 mt-2">
+          Checked every time this connection syncs — visits come from Cliniko&apos;s appointment
+          history.
+        </p>
+      </div>
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-2">
@@ -499,15 +672,19 @@ function ClinikoConnectionForm({
 
 function NookalConnectionForm({
   businessId,
+  initialRule,
   onDone,
   onCancel,
 }: {
   businessId: string;
+  initialRule: Rule;
   onDone: () => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState("Nookal");
   const [apiKey, setApiKey] = useState("");
+  const [autoEnabled, setAutoEnabled] = useState(initialRule.enabled);
+  const [autoThreshold, setAutoThreshold] = useState(initialRule.visitThreshold);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -526,6 +703,11 @@ function NookalConnectionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Nookal.");
+      await fetch("/api/automation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, enabled: autoEnabled, visitThreshold: autoThreshold }),
+      });
       onDone();
     } catch (err) {
       setError((err as Error).message);
@@ -552,6 +734,19 @@ function NookalConnectionForm({
           placeholder="From Nookal → Setup → API Access"
           className="w-full rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3 py-2 text-sm font-mono"
         />
+      </div>
+
+      <div className="pt-3 border-t border-black/5 dark:border-white/5">
+        <TriggerFields
+          enabled={autoEnabled}
+          setEnabled={setAutoEnabled}
+          threshold={autoThreshold}
+          setThreshold={setAutoThreshold}
+        />
+        <p className="text-[11px] text-gray-500 mt-2">
+          Checked every time this connection syncs — visits come from Nookal&apos;s appointment
+          history.
+        </p>
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

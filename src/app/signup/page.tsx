@@ -43,7 +43,7 @@ export default function SignupPage() {
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-xl">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Create your account</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl tracking-tight sm:text-4xl">Create your account</h1>
           <p className="mt-3 text-gray-500 dark:text-gray-400">
             One account, one business to start — you can add more later.
           </p>

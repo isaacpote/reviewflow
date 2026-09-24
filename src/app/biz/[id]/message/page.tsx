@@ -1,8 +1,8 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import Link from "next/link";
 import { renderTemplate, appendOptOutNotice } from "@/lib/template";
-import { AutomationCard } from "@/components/AutomationCard";
 import { GoogleBusinessCard } from "@/components/GoogleBusinessCard";
 
 const VARIABLES = [
@@ -161,7 +161,13 @@ export default function MessagePage(props: PageProps<"/biz/[id]/message">) {
         </div>
       </div>
 
-      <AutomationCard businessId={businessId} />
+      <div className="rounded-xl border border-dashed border-black/10 dark:border-white/15 p-4 text-sm text-gray-500">
+        Automation (when this fires) is set up alongside your CRM connection — head to{" "}
+        <Link href={`/biz/${businessId}/crm`} className="text-emerald-600 underline">
+          CRM & Contacts
+        </Link>{" "}
+        to connect Cliniko/Nookal and choose when it sends.
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { Users, Send, Clock3 } from "lucide-react";
 
 type ReviewRequest = { id: string; status: string; sentAt: string };
 type Contact = {
@@ -72,10 +73,12 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
 
   return (
     <div className="max-w-4xl space-y-8">
+      <h1 className="font-[family-name:var(--font-display)] text-2xl">Dashboard</h1>
+
       <div className="grid grid-cols-3 gap-3">
-        <Stat label="Total contacts" value={contacts.length} />
-        <Stat label="Requests sent" value={sentCount} />
-        <Stat label="Pending" value={pending.length} />
+        <Stat label="Total contacts" value={contacts.length} icon={Users} />
+        <Stat label="Requests sent" value={sentCount} icon={Send} />
+        <Stat label="Pending" value={pending.length} icon={Clock3} />
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -161,11 +164,24 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
   return (
-    <div className="rounded-xl border border-black/10 dark:border-white/10 p-4">
-      <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+    <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-2xl font-semibold">{value}</div>
+        <div className="h-8 w-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-emerald-600" />
+        </div>
+      </div>
+      <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
   );
 }

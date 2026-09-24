@@ -126,11 +126,52 @@ To go live: self-register a free GUID at
 https://abr.business.gov.au/Tools/WebServices (instant, no cost), set
 `ABN_LOOKUP_GUID` and `ABN_LOOKUP_MOCK=false` in `.env`.
 
-This is a basic fraud/legitimacy gate, not full KYC — it confirms the ABN is
-real and active, not that the person signing up is authorized to act for
-that business. Full identity verification (director ID matching, etc.)
-needs a dedicated vendor — Stripe Identity, Frankie One, or Australia Post
-Digital iD are the common picks — and isn't wired up here yet.
+The ABN check alone confirms the business is real, not that the person
+signing up is authorized to act for it — that's what identity verification
+(below) adds.
+
+## Identity verification (KYC — Stripe Identity)
+
+`src/lib/kyc.ts` starts a Stripe Identity verification session (government
+ID + selfie match) for the business's authorized representative and stores
+the result on `Business.kycStatus`. Unlike Twilio/Cliniko/etc, this isn't a
+custom mock layer standing in for a real API — **Stripe's own test mode is
+the mock**: fully functional immediately on signup, no approval wait, same
+code path as production, just no real money/verification behind it.
+
+- `STRIPE_MOCK=true` (default) skips even test-mode Stripe — clicking
+  "Verify identity" redirects to `/kyc/mock/[sessionId]`, an in-app stand-in
+  for Stripe's hosted verification page with "Simulate: verified" /
+  "Simulate: failed" buttons, so the whole redirect-out-and-back flow is
+  clickable before you have any Stripe account at all.
+- Set `STRIPE_MOCK=false` with a real `STRIPE_SECRET_KEY` (test or live) to
+  hit Stripe for real — `startVerification()` creates an actual
+  `identity.VerificationSession` and redirects to Stripe's real hosted page.
+- Status updates two ways: `POST /api/stripe/webhook` (real-time, needs
+  `STRIPE_WEBHOOK_SECRET` and a public URL configured in the Stripe
+  Dashboard once deployed) and a manual "Check status" refresh
+  (`GET /api/kyc/status`, polls Stripe directly) as a fallback that works
+  even without a working webhook — useful for local testing.
+
+**Tested end-to-end against real Stripe test mode**, not just the mock:
+start → real `identity.VerificationSession` created → real
+`verify.stripe.com` hosted page loaded → completed via Stripe's own "complete
+with test data" shortcut → redirected back → `GET /api/kyc/status` polled
+Stripe for real and correctly returned `VERIFIED` with the name Stripe
+extracted ("Jenny Rosen" — Stripe's standard test persona). Mock mode
+(`STRIPE_MOCK=true`) is also tested and still useful for demoing before you
+have a Stripe account at all.
+
+**Bug caught and fixed during that test**: Stripe's `requires_input` session
+status means both "brand new, nothing submitted yet" and "failed, needs a
+retry" — the only way to tell them apart is whether `last_error` is
+populated. The first version of `checkVerificationStatus()` treated every
+`requires_input` session as a failure, which would have shown "Verification
+failed" to a business owner who hadn't even started yet. Fixed in
+`src/lib/kyc.ts`.
+
+Same Stripe account will also handle billing (subscriptions/plan gating)
+whenever that's built — no separate integration needed.
 
 ## Automation (rule-based auto-send)
 
@@ -219,25 +260,35 @@ log).
 
 ## What's not built yet
 
-- **Billing** — no Stripe/subscription plan gating. Every account currently
-  has unlimited access to everything.
-- **Deployment** — this only runs locally against a SQLite file
-  (`prisma/dev.db`). Shipping it means: a real Postgres database, deploying
-  the Next.js app (Vercel is the path of least resistance), and moving
-  secrets (`SESSION_SECRET`, Twilio creds) into that platform's env vars.
+- **Real Twilio credentials** — deployed and working end-to-end in mock
+  mode; going live is just adding your real Account SID/Auth
+  Token/Verify/Messaging Service SIDs once you're off the Twilio trial.
+- **Real Cliniko test** — the connector is built and deployed; hasn't
+  actually been run against a live Cliniko account yet, so the field-shape
+  caveat in the CRM section above is still unresolved.
+- **Billing** — no Stripe subscription plans or payment collection wired
+  up. Uses the same Stripe account as Identity verification (above) when
+  it's built.
 - **Email** — no email verification on signup, no password-reset flow, no
   transactional email at all yet.
-- **A real scheduler** — visit-count automation (see above) exists and is
-  tested, but it only checks on manual "Sync now" clicks. Needs a cron job
-  once deployed to actually run unattended. Time-based triggers (e.g. "2
-  hours after appointment") aren't built at all yet.
-- Opt-out (STOP) handling and delivery status webhooks from Twilio.
+- **A real scheduler** — visit-count automation exists and is tested, but
+  only checks on manual "Sync now" clicks or a real CRM sync. Needs a cron
+  job (e.g. Vercel Cron) to run unattended. Time-based triggers (e.g. "2
+  hours after appointment") and a dormant-customer/reactivation trigger
+  aren't built yet.
+- **Reviews and reactivation sections** — planned, not started. Reviews
+  would need real Google Business Profile access (below) to know when a
+  review actually landed; reactivation is a second automation trigger type
+  ("no visit in N days") on top of the existing visit-count one.
 - Native CRM connectors beyond Cliniko/Nookal/CSV/webhook (Square, ServiceM8,
   Tradify, HubSpot, GoHighLevel, Salesforce — all still OAuth-gated on
   someone signing up as a developer with each platform first).
 - **Real Google Business Profile OAuth** — mock flow works end-to-end, but
   going live needs a Google Cloud OAuth app + applying for API access
   (Google's manual approval, not guaranteed) + a real authorization-code
-  flow. Start the application early — it's the longest lead time of
-  anything left on this list.
-- Full identity/KYC verification beyond ABN checksum + registry lookup.
+  flow. This is the longest lead time of anything on this list — worth
+  applying now regardless of what else is in progress.
+- **"Sign in with Google"** for your own users (not Business Profile) —
+  simple, self-serve OAuth, not yet built.
+- A2P 10DLC — deliberately not built. It's US/Canada-only and doesn't apply
+  to Australian numbers; revisit only if/when expanding there.

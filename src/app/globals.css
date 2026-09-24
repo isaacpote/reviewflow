@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf9f6;
+  --foreground: #1c1917;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
   --font-mono: var(--font-geist-mono);
+
+  /* Warm ink/paper replace pure black/white everywhere in the app */
+  --color-black: #1c1917;
+  --color-white: #fbf9f6;
+
+  /* Stone — muted text, borders, secondary UI */
+  --color-gray-50: #f5f1ea;
+  --color-gray-200: #e4ddd0;
+  --color-gray-400: #a39b8b;
+  --color-gray-500: #8a8174;
+  --color-gray-800: #2d2a24;
+
+  /* Gold — the primary accent. Reviews are stars; this is that color,
+     without literally drawing stars everywhere. */
+  --color-emerald-400: #efc169;
+  --color-emerald-500: #e0a438;
+  --color-emerald-600: #c4881f;
+
+  /* Pine — secondary accent, used for the "auto-sent" indicator */
+  --color-blue-500: #2b6f5f;
+
+  /* Ember — warm error/danger, replaces default red */
+  --color-red-500: #c4532d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #17140f;
+    --foreground: #f3efe8;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes star-fill {
+    from {
+      opacity: 0;
+      transform: scale(0.4) rotate(-8deg);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .animate-star-fill {
+    opacity: 0;
+    animation: star-fill 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: calc(var(--star-index, 0) * 140ms + 500ms);
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-rise-in {
+    opacity: 0;
+    animation: rise-in 0.5s ease-out forwards;
+    animation-delay: var(--rise-delay, 0ms);
+  }
 }

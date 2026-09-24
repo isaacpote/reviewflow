@@ -36,7 +36,7 @@ export default function LoginPage() {
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Log in</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl tracking-tight">Log in</h1>
         </div>
 
         <form
