@@ -120,6 +120,11 @@ export default async function Home() {
           </div>
         </div>
       </main>
+
+      <footer className="px-6 sm:px-10 py-6 text-xs text-gray-500 flex gap-4">
+        <Link href="/terms" className="hover:underline">Terms</Link>
+        <Link href="/privacy" className="hover:underline">Privacy</Link>
+      </footer>
     </div>
   );
 }

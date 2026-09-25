@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { BUSINESS_TYPES, type BusinessTypeValue } from "@/lib/business-types";
-import { GoogleButton } from "@/components/GoogleButton";
 
-export default function SignupPage() {
+export default function CompleteSignupPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessTypeValue>("PHYSIO_OSTEO");
   const [loading, setLoading] = useState(false);
@@ -24,14 +20,14 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/complete-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, businessName, businessType }),
+        body: JSON.stringify({ businessName, businessType }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(typeof data.error === "string" ? data.error : "Couldn't create your account.");
+        throw new Error(typeof data.error === "string" ? data.error : "Couldn't set up your business.");
       }
       router.push(`/biz/${data.business.id}/number`);
     } catch (err) {
@@ -44,48 +40,18 @@ export default function SignupPage() {
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-xl">
         <div className="mb-10 text-center">
-          <h1 className="font-[family-name:var(--font-display)] text-3xl tracking-tight sm:text-4xl">Create your account</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl tracking-tight sm:text-4xl">
+            One more thing
+          </h1>
           <p className="mt-3 text-gray-500 dark:text-gray-400">
-            One account, one business to start — you can add more later.
+            Tell us about your business so we can set up your first number.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 dark:border-white/10 p-6 sm:p-8 space-y-6 bg-white/50 dark:bg-white/[0.03]">
-          <GoogleButton label="Sign up with Google" />
-
-          <div className="flex items-center gap-3 text-xs text-gray-400">
-            <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
-            or
-            <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
-          </div>
-
         <form
           onSubmit={handleSubmit}
-          className="space-y-6"
+          className="rounded-2xl border border-black/10 dark:border-white/10 p-6 sm:p-8 space-y-6 bg-white/50 dark:bg-white/[0.03]"
         >
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@business.com"
-                className="w-full rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                className="w-full rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
-              />
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium mb-1.5">Business name</label>
             <input
@@ -133,24 +99,9 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium py-2.5 transition"
           >
-            {loading ? "Setting up…" : "Create account →"}
+            {loading ? "Setting up…" : "Continue →"}
           </button>
-
-          <p className="text-center text-xs text-gray-500">
-            By creating an account you agree to the{" "}
-            <Link href="/terms" className="underline">Terms</Link> and{" "}
-            <Link href="/privacy" className="underline">Privacy Policy</Link>, including that you
-            have consent to message the contacts you upload.
-          </p>
-
-          <p className="text-center text-sm text-gray-500">
-            Already have an account?{" "}
-            <Link href="/login" className="text-emerald-600 underline">
-              Log in
-            </Link>
-          </p>
         </form>
-        </div>
       </div>
     </main>
   );

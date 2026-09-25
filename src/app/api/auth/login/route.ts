@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     include: { businesses: { orderBy: { createdAt: "asc" }, take: 1 } },
   });
 
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
