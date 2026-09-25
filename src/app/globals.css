@@ -1,46 +1,48 @@
 @import "tailwindcss";
 
+/* Single light theme — dark: utilities only apply under an explicit .dark
+   class, which this app never sets, so system dark mode can't fork the look. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #fbf9f6;
-  --foreground: #1c1917;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
-  /* Warm ink/paper replace pure black/white everywhere in the app */
-  --color-black: #1c1917;
-  --color-white: #fbf9f6;
+  /* Slate ink / white paper — clean SaaS light theme */
+  --color-black: #0f172a;
+  --color-white: #ffffff;
 
-  /* Stone — muted text, borders, secondary UI */
-  --color-gray-50: #f5f1ea;
-  --color-gray-200: #e4ddd0;
-  --color-gray-400: #a39b8b;
-  --color-gray-500: #8a8174;
-  --color-gray-800: #2d2a24;
+  /* Slate — muted text, borders, secondary UI */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
 
-  /* Gold — the primary accent. Reviews are stars; this is that color,
-     without literally drawing stars everywhere. */
-  --color-emerald-400: #efc169;
-  --color-emerald-500: #e0a438;
-  --color-emerald-600: #c4881f;
+  /* Blue — the primary accent */
+  --color-emerald-50: #eff6ff;
+  --color-emerald-400: #60a5fa;
+  --color-emerald-500: #3b82f6;
+  --color-emerald-600: #2563eb;
+  --color-emerald-700: #1d4ed8;
 
-  /* Pine — secondary accent, used for the "auto-sent" indicator */
-  --color-blue-500: #2b6f5f;
+  /* Green — secondary accent, used for "auto-sent" / success indicators */
+  --color-blue-500: #16a34a;
 
-  /* Ember — warm error/danger, replaces default red */
-  --color-red-500: #c4532d;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #17140f;
-    --foreground: #f3efe8;
-  }
+  /* Red — error/danger */
+  --color-red-500: #ef4444;
 }
 
 body {

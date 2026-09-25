@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Phone, MessageSquare, Database, LayoutDashboard } from "lucide-react";
+import { Phone, MessageSquare, Database, LayoutDashboard, Settings } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
 
 const MOBILE_NAV = [
+  { seg: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { seg: "number", label: "Number", icon: Phone },
   { seg: "message", label: "Message", icon: MessageSquare },
   { seg: "crm", label: "CRM", icon: Database },
-  { seg: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { seg: "settings", label: "Settings", icon: Settings },
 ];
 
 export default async function BizLayout(props: LayoutProps<"/biz/[id]">) {
@@ -31,15 +32,15 @@ export default async function BizLayout(props: LayoutProps<"/biz/[id]">) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Compact top bar — sidebar is hidden below sm, this is the mobile nav */}
-        <header className="sm:hidden flex items-center justify-between px-4 py-3 border-b border-black/10 dark:border-white/10">
-          <Link href="/" className="font-[family-name:var(--font-display)] text-base italic">
+        <header className="sm:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+          <Link href="/" className="font-semibold text-base tracking-tight">
             ReviewFlow
           </Link>
           <Link href="/app" className="text-xs text-gray-500">
             {business.name}
           </Link>
         </header>
-        <nav className="sm:hidden flex items-center justify-around border-b border-black/10 dark:border-white/10 py-1.5">
+        <nav className="sm:hidden flex items-center justify-around border-b border-gray-200 bg-white py-1.5">
           {MOBILE_NAV.map((item) => {
             const Icon = item.icon;
             return (

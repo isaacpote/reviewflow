@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Phone, MessageSquare, Database, LayoutDashboard, ChevronsUpDown, LogOut } from "lucide-react";
+import { Phone, MessageSquare, Database, LayoutDashboard, ChevronsUpDown, LogOut, Settings, Star } from "lucide-react";
 import { useState } from "react";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -25,24 +25,28 @@ export function Sidebar({
   const pathname = usePathname();
 
   const nav = [
+    { href: `/biz/${businessId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
     { href: `/biz/${businessId}/number`, label: "Number", icon: Phone },
     { href: `/biz/${businessId}/message`, label: "Message", icon: MessageSquare },
     { href: `/biz/${businessId}/crm`, label: "CRM & Contacts", icon: Database },
-    { href: `/biz/${businessId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
+    { href: `/biz/${businessId}/settings`, label: "Settings", icon: Settings },
   ];
 
   return (
-    <aside className="hidden sm:flex w-64 shrink-0 flex-col border-r border-black/10 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02]">
+    <aside className="hidden sm:flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white">
       <div className="px-5 py-5">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-lg italic tracking-tight">
-          ReviewFlow
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shrink-0">
+            <Star className="h-4 w-4 fill-white" />
+          </span>
+          <span className="font-semibold text-[15px] tracking-tight">ReviewFlow</span>
         </Link>
       </div>
 
       <div className="px-3">
         <Link
           href="/app"
-          className="flex items-center justify-between gap-2 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-3 py-2.5 hover:border-emerald-500/50 transition"
+          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:border-emerald-500/50 transition"
         >
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">{businessName}</div>
@@ -62,8 +66,8 @@ export function Sidebar({
               href={item.href}
               className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "text-gray-600 hover:bg-gray-50"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -90,13 +94,13 @@ function UserFooter({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <div className="border-t border-black/10 dark:border-white/10 px-3 py-3 flex items-center justify-between gap-2">
+    <div className="border-t border-gray-200 px-3 py-3 flex items-center justify-between gap-2">
       <span className="text-xs text-gray-500 truncate">{userEmail}</span>
       <button
         onClick={logout}
         disabled={loggingOut}
         title="Log out"
-        className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition disabled:opacity-60"
+        className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition disabled:opacity-60"
       >
         <LogOut className="h-4 w-4" />
       </button>
