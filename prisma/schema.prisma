@@ -36,8 +36,9 @@ enum ContactStatus {
   OPTED_OUT
 }
 
-enum TriggerType {
-  VISIT_COUNT
+enum ReviewRequestKind {
+  REVIEW_REQUEST
+  REACTIVATION
 }
 
 enum KycStatus {
@@ -74,6 +75,7 @@ model Business {
   kycSessionId      String? // Stripe Identity VerificationSession id
   kycVerifiedName   String? // name Stripe extracted from the verified document
   kycFailureReason  String?
+  reactivationMessage String? // win-back SMS sent when a contact hasn't visited in N days
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -138,6 +140,8 @@ model Contact {
   status       ContactStatus  @default(PENDING)
   visitCount   Int            @default(0) // from CRM sync (e.g. completed appointments)
   autoSentAtVisitCount Int?   // visitCount when automation last fired, so it only fires once per threshold
+  lastVisitAt  DateTime?      // from CRM sync — most recent appointment/visit date
+  autoSentReactivationAt DateTime? // when a reactivation message last fired, so it only fires once per quiet period
   createdAt    DateTime       @default(now())
 
   reviewRequests ReviewRequest[]
@@ -148,20 +152,22 @@ model AutomationRule {
   business       Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   businessId     String      @unique
   enabled        Boolean     @default(false)
-  triggerType    TriggerType @default(VISIT_COUNT)
   visitThreshold Int         @default(4)
+  reactivationEnabled Boolean @default(false) // "hasn't visited in N days" win-back trigger
+  reactivationDays    Int     @default(30)
   updatedAt      DateTime    @updatedAt
 }
 
 model ReviewRequest {
-  id           String   @id @default(cuid())
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id           String            @id @default(cuid())
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
   businessId   String
-  contact      Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact      Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId    String
+  kind         ReviewRequestKind @default(REVIEW_REQUEST)
   messageBody  String
   status       String // queued | sent | delivered | failed
   twilioSid    String?
   errorMessage String?
-  sentAt       DateTime @default(now())
+  sentAt       DateTime          @default(now())
 }

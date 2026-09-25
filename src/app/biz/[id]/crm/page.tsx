@@ -12,7 +12,30 @@ type Connection = {
   lastSyncedAt: string | null;
 };
 
-type Rule = { enabled: boolean; visitThreshold: number };
+type Rule = {
+  enabled: boolean;
+  visitThreshold: number;
+  reactivationEnabled: boolean;
+  reactivationDays: number;
+};
+
+const REACTIVATION_LABEL: Record<string, { verb: string; noun: string; blurb: string }> = {
+  RESTAURANT: {
+    verb: "Send an offer",
+    noun: "offer",
+    blurb: "Win back diners who haven't booked in a while with a return offer.",
+  },
+  PHYSIO_OSTEO: {
+    verb: "Send a reactivation text",
+    noun: "reactivation",
+    blurb: "Nudge patients who've gone quiet to book back in.",
+  },
+  TRADIE: {
+    verb: "Send a reactivation text",
+    noun: "reactivation",
+    blurb: "Check back in with customers who haven't booked a job in a while.",
+  },
+};
 
 const NATIVE_CRMS = [
   { key: "HUBSPOT", label: "HubSpot" },
@@ -28,7 +51,14 @@ type Mode = "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | null;
 export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
   const { id: businessId } = use(props.params);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [rule, setRule] = useState<Rule>({ enabled: false, visitThreshold: 4 });
+  const [rule, setRule] = useState<Rule>({
+    enabled: false,
+    visitThreshold: 4,
+    reactivationEnabled: false,
+    reactivationDays: 30,
+  });
+  const [businessType, setBusinessType] = useState<string>("PHYSIO_OSTEO");
+  const [reactivationMessage, setReactivationMessage] = useState("");
   const [mode, setMode] = useState<Mode>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -36,9 +66,19 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
     Promise.all([
       fetch(`/api/crm/connection?businessId=${businessId}`).then((r) => r.json()),
       fetch(`/api/automation?businessId=${businessId}`).then((r) => r.json()),
-    ]).then(([connData, ruleData]) => {
+      fetch(`/api/business/${businessId}`).then((r) => r.json()),
+    ]).then(([connData, ruleData, bizData]) => {
       setConnections(connData.connections);
-      if (ruleData.rule) setRule({ enabled: ruleData.rule.enabled, visitThreshold: ruleData.rule.visitThreshold });
+      if (ruleData.rule) {
+        setRule({
+          enabled: ruleData.rule.enabled,
+          visitThreshold: ruleData.rule.visitThreshold,
+          reactivationEnabled: ruleData.rule.reactivationEnabled,
+          reactivationDays: ruleData.rule.reactivationDays,
+        });
+      }
+      setBusinessType(bizData.business.type);
+      setReactivationMessage(bizData.business.reactivationMessage ?? "");
       setRefreshKey((k) => k + 1);
     });
   }
@@ -46,6 +86,7 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
   useEffect(refresh, [businessId]);
 
   const hasCrmSync = connections.some((c) => c.type === "CLINIKO" || c.type === "NOOKAL");
+  const reactivationCopy = REACTIVATION_LABEL[businessType] ?? REACTIVATION_LABEL.PHYSIO_OSTEO;
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -79,7 +120,13 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
                 </div>
                 {(c.type === "CLINIKO" || c.type === "NOOKAL") && (
                   <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
-                    <TriggerEditor businessId={businessId} rule={rule} onSaved={refresh} />
+                    <TriggerEditor
+                      businessId={businessId}
+                      rule={rule}
+                      reactivationMessage={reactivationMessage}
+                      reactivationCopy={reactivationCopy}
+                      onSaved={refresh}
+                    />
                   </div>
                 )}
               </li>
@@ -142,6 +189,8 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
           <ClinikoConnectionForm
             businessId={businessId}
             initialRule={rule}
+            reactivationCopy={reactivationCopy}
+            initialReactivationMessage={reactivationMessage}
             onDone={() => { setMode(null); refresh(); }}
             onCancel={() => setMode(null)}
           />
@@ -150,6 +199,8 @@ export default function CrmPage(props: PageProps<"/biz/[id]/crm">) {
           <NookalConnectionForm
             businessId={businessId}
             initialRule={rule}
+            reactivationCopy={reactivationCopy}
+            initialReactivationMessage={reactivationMessage}
             onDone={() => { setMode(null); refresh(); }}
             onCancel={() => setMode(null)}
           />
@@ -238,37 +289,115 @@ function TriggerFields({
   );
 }
 
+/** Checkbox + days threshold + message — the win-back / reactivation trigger,
+ * reused inline and inside the connect forms, same as TriggerFields. */
+function ReactivationFields({
+  enabled,
+  setEnabled,
+  days,
+  setDays,
+  message,
+  setMessage,
+  copy,
+}: {
+  enabled: boolean;
+  setEnabled: (v: boolean) => void;
+  days: number;
+  setDays: (v: number) => void;
+  message: string;
+  setMessage: (v: string) => void;
+  copy: { verb: string; noun: string; blurb: string };
+}) {
+  return (
+    <div>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+        <span className="text-sm font-medium">{copy.verb} automatically</span>
+      </label>
+      <p className="text-[11px] text-gray-500 mt-0.5 pl-6">{copy.blurb}</p>
+      {enabled && (
+        <div className="pl-6 mt-2 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Hasn&apos;t visited in</span>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-center"
+            />
+            <span className="text-sm text-gray-500">days</span>
+          </div>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={2}
+            placeholder={`Hey {{first_name}}! It's been a while since we've seen you at {{business_name}} — come back and see us soon.`}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Inline summary + editable trigger settings shown under each Cliniko/Nookal
- * connection row. The rule is shared across the whole business, so editing it
- * from any connection updates the same one everyone sees. */
+ * connection row. The rules are shared across the whole business, so editing
+ * from any connection updates the same ones everyone sees. */
 function TriggerEditor({
   businessId,
   rule,
+  reactivationMessage,
+  reactivationCopy,
   onSaved,
 }: {
   businessId: string;
   rule: Rule;
+  reactivationMessage: string;
+  reactivationCopy: { verb: string; noun: string; blurb: string };
   onSaved: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [enabled, setEnabled] = useState(rule.enabled);
   const [threshold, setThreshold] = useState(rule.visitThreshold);
+  const [reactEnabled, setReactEnabled] = useState(rule.reactivationEnabled);
+  const [reactDays, setReactDays] = useState(rule.reactivationDays);
+  const [message, setMessage] = useState(reactivationMessage);
   const [saving, setSaving] = useState(false);
 
   function startEditing() {
     setEnabled(rule.enabled);
     setThreshold(rule.visitThreshold);
+    setReactEnabled(rule.reactivationEnabled);
+    setReactDays(rule.reactivationDays);
+    setMessage(reactivationMessage);
     setEditing(true);
   }
 
   async function save() {
     setSaving(true);
     try {
-      await fetch("/api/automation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, enabled, visitThreshold: threshold }),
-      });
+      await Promise.all([
+        fetch("/api/automation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessId,
+            enabled,
+            visitThreshold: threshold,
+            reactivationEnabled: reactEnabled,
+            reactivationDays: reactDays,
+          }),
+        }),
+        message.trim()
+          ? fetch(`/api/business/${businessId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reactivationMessage: message.trim() }),
+            })
+          : Promise.resolve(),
+      ]);
       onSaved();
       setEditing(false);
     } finally {
@@ -279,17 +408,31 @@ function TriggerEditor({
   if (!editing) {
     return (
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">
-          {rule.enabled ? (
-            <>
-              <span className="text-emerald-600 font-medium">Auto-sends</span> after visit #
-              {rule.visitThreshold}
-            </>
-          ) : (
-            "Not automated — send manually from the dashboard"
-          )}
-        </p>
-        <button onClick={startEditing} className="text-[11px] text-gray-500 underline">
+        <div className="text-xs text-gray-500 space-y-0.5">
+          <p>
+            {rule.enabled ? (
+              <>
+                <span className="text-emerald-600 font-medium">Auto-sends</span> after visit #
+                {rule.visitThreshold}
+              </>
+            ) : (
+              "Review requests not automated — send manually from the dashboard"
+            )}
+          </p>
+          <p>
+            {rule.reactivationEnabled ? (
+              <>
+                <span className="text-emerald-600 font-medium">
+                  {reactivationCopy.noun[0].toUpperCase() + reactivationCopy.noun.slice(1)} auto-sends
+                </span>{" "}
+                after {rule.reactivationDays} quiet days
+              </>
+            ) : (
+              `No ${reactivationCopy.noun} automation configured`
+            )}
+          </p>
+        </div>
+        <button onClick={startEditing} className="text-[11px] text-gray-500 underline shrink-0">
           Edit
         </button>
       </div>
@@ -297,8 +440,19 @@ function TriggerEditor({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <TriggerFields enabled={enabled} setEnabled={setEnabled} threshold={threshold} setThreshold={setThreshold} />
+      <div className="pt-3 border-t border-gray-100">
+        <ReactivationFields
+          enabled={reactEnabled}
+          setEnabled={setReactEnabled}
+          days={reactDays}
+          setDays={setReactDays}
+          message={message}
+          setMessage={setMessage}
+          copy={reactivationCopy}
+        />
+      </div>
       <div className="flex gap-2">
         <button
           onClick={save}
@@ -555,11 +709,15 @@ const CLINIKO_SHARDS = ["au1", "au2", "au3", "au4", "uk1", "us1", "ca1"];
 function ClinikoConnectionForm({
   businessId,
   initialRule,
+  reactivationCopy,
+  initialReactivationMessage,
   onDone,
   onCancel,
 }: {
   businessId: string;
   initialRule: Rule;
+  reactivationCopy: { verb: string; noun: string; blurb: string };
+  initialReactivationMessage: string;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -568,6 +726,9 @@ function ClinikoConnectionForm({
   const [shard, setShard] = useState("au4");
   const [autoEnabled, setAutoEnabled] = useState(initialRule.enabled);
   const [autoThreshold, setAutoThreshold] = useState(initialRule.visitThreshold);
+  const [reactEnabled, setReactEnabled] = useState(initialRule.reactivationEnabled);
+  const [reactDays, setReactDays] = useState(initialRule.reactivationDays);
+  const [reactMessage, setReactMessage] = useState(initialReactivationMessage);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -586,11 +747,26 @@ function ClinikoConnectionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Cliniko.");
-      await fetch("/api/automation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, enabled: autoEnabled, visitThreshold: autoThreshold }),
-      });
+      await Promise.all([
+        fetch("/api/automation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessId,
+            enabled: autoEnabled,
+            visitThreshold: autoThreshold,
+            reactivationEnabled: reactEnabled,
+            reactivationDays: reactDays,
+          }),
+        }),
+        reactMessage.trim()
+          ? fetch(`/api/business/${businessId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reactivationMessage: reactMessage.trim() }),
+            })
+          : Promise.resolve(),
+      ]);
       onDone();
     } catch (err) {
       setError((err as Error).message);
@@ -652,6 +828,18 @@ function ClinikoConnectionForm({
         </p>
       </div>
 
+      <div className="pt-3 border-t border-black/5 dark:border-white/5">
+        <ReactivationFields
+          enabled={reactEnabled}
+          setEnabled={setReactEnabled}
+          days={reactDays}
+          setDays={setReactDays}
+          message={reactMessage}
+          setMessage={setReactMessage}
+          copy={reactivationCopy}
+        />
+      </div>
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-2">
@@ -673,11 +861,15 @@ function ClinikoConnectionForm({
 function NookalConnectionForm({
   businessId,
   initialRule,
+  reactivationCopy,
+  initialReactivationMessage,
   onDone,
   onCancel,
 }: {
   businessId: string;
   initialRule: Rule;
+  reactivationCopy: { verb: string; noun: string; blurb: string };
+  initialReactivationMessage: string;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -685,6 +877,9 @@ function NookalConnectionForm({
   const [apiKey, setApiKey] = useState("");
   const [autoEnabled, setAutoEnabled] = useState(initialRule.enabled);
   const [autoThreshold, setAutoThreshold] = useState(initialRule.visitThreshold);
+  const [reactEnabled, setReactEnabled] = useState(initialRule.reactivationEnabled);
+  const [reactDays, setReactDays] = useState(initialRule.reactivationDays);
+  const [reactMessage, setReactMessage] = useState(initialReactivationMessage);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -703,11 +898,26 @@ function NookalConnectionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Nookal.");
-      await fetch("/api/automation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, enabled: autoEnabled, visitThreshold: autoThreshold }),
-      });
+      await Promise.all([
+        fetch("/api/automation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessId,
+            enabled: autoEnabled,
+            visitThreshold: autoThreshold,
+            reactivationEnabled: reactEnabled,
+            reactivationDays: reactDays,
+          }),
+        }),
+        reactMessage.trim()
+          ? fetch(`/api/business/${businessId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reactivationMessage: reactMessage.trim() }),
+            })
+          : Promise.resolve(),
+      ]);
       onDone();
     } catch (err) {
       setError((err as Error).message);
@@ -747,6 +957,18 @@ function NookalConnectionForm({
           Checked every time this connection syncs — visits come from Nookal&apos;s appointment
           history.
         </p>
+      </div>
+
+      <div className="pt-3 border-t border-black/5 dark:border-white/5">
+        <ReactivationFields
+          enabled={reactEnabled}
+          setEnabled={setReactEnabled}
+          days={reactDays}
+          setDays={setReactDays}
+          message={reactMessage}
+          setMessage={setReactMessage}
+          copy={reactivationCopy}
+        />
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

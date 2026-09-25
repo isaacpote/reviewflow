@@ -26,6 +26,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 const patchSchema = z.object({
   reviewLink: z.string().url().optional(),
   name: z.string().min(1).optional(),
+  reactivationMessage: z.string().min(1).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

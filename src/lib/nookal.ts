@@ -16,12 +16,13 @@ function nextMockVisitCount(externalId: string, startAt: number): number {
 }
 
 function mockPatients(): NormalizedPatient[] {
-  const names: [string, string, number][] = [
-    ["Taylor", "Brooks", 2],
-    ["Morgan", "Diaz", 4],
-    ["Riley", "Nguyen", 1],
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+  const names: [string, string, number, number][] = [
+    ["Taylor", "Brooks", 2, 3],
+    ["Morgan", "Diaz", 4, 40], // hasn't visited in 40 days — ready to demo reactivation
+    ["Riley", "Nguyen", 1, 1],
   ];
-  return names.map(([firstName, lastName, startAt], i) => {
+  return names.map(([firstName, lastName, startAt, lastVisitDaysAgo], i) => {
     const externalId = `mock-nookal-${i + 1}`;
     const visitCount = nextMockVisitCount(externalId, startAt);
     return {
@@ -31,6 +32,7 @@ function mockPatients(): NormalizedPatient[] {
       phone: `+61${411111111 + i}`,
       email: `${firstName.toLowerCase()}@example.com`,
       visitCount,
+      lastVisitAt: daysAgo(lastVisitDaysAgo),
       raw: { mock: true, firstName, lastName, visitCount },
     };
   });
@@ -72,7 +74,7 @@ export async function fetchNookalPatients(
     const patients = data.data?.results?.patients ?? [];
     for (const p of patients) {
       const externalId = String(p.ID ?? p.id);
-      const visitCount = await fetchNookalVisitCount(credentials, externalId);
+      const { count: visitCount, lastVisitAt } = await fetchNookalVisitStats(credentials, externalId);
       results.push({
         externalId,
         firstName: p.first_name,
@@ -80,6 +82,7 @@ export async function fetchNookalPatients(
         phone: p.mobile_phone || p.home_phone || p.work_phone || undefined,
         email: p.email ?? undefined,
         visitCount,
+        lastVisitAt,
         raw: p,
       });
     }
@@ -92,20 +95,26 @@ export async function fetchNookalPatients(
   return results;
 }
 
-async function fetchNookalVisitCount(
+async function fetchNookalVisitStats(
   credentials: NookalCredentials,
   patientId: string
-): Promise<number> {
+): Promise<{ count: number; lastVisitAt?: Date }> {
   const url = `https://api.nookal.com/production/v2/getAppointments?api_key=${encodeURIComponent(
     credentials.apiKey
   )}&patient_id=${encodeURIComponent(patientId)}&page_length=200`;
   const res = await fetch(url);
-  if (!res.ok) return 0; // don't fail the whole sync over one patient's visit history
+  if (!res.ok) return { count: 0 }; // don't fail the whole sync over one patient's visit history
   const data = await res.json();
   const appointments = data.data?.results?.appointments ?? [];
   const now = Date.now();
-  return appointments.filter((a: { status?: string; appointmentDate?: string }) => {
+  const past = appointments.filter((a: { status?: string; appointmentDate?: string }) => {
     const isPast = a.appointmentDate ? new Date(a.appointmentDate).getTime() < now : false;
     return isPast && a.status !== "Cancelled";
-  }).length;
+  });
+  const lastVisitAt = past.reduce((latest: Date | undefined, a: { appointmentDate?: string }) => {
+    if (!a.appointmentDate) return latest;
+    const d = new Date(a.appointmentDate);
+    return !latest || d > latest ? d : latest;
+  }, undefined as Date | undefined);
+  return { count: past.length, lastVisitAt };
 }

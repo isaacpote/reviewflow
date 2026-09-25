@@ -73,3 +73,58 @@ export async function sendReviewRequestToContact(params: {
     return { contactId: contact.id, status: "failed", error: errorMessage };
   }
 }
+
+/**
+ * Sends a win-back text to a contact who's gone quiet. Deliberately doesn't
+ * touch contact.status — that field tracks the review-request pipeline, and
+ * reactivation is a separate, independent send.
+ */
+export async function sendReactivationToContact(params: {
+  business: Business;
+  messageBody: string;
+  verifiedNumber: PhoneNumber;
+  contact: Contact;
+}): Promise<SendResult> {
+  const { business, messageBody: template, verifiedNumber, contact } = params;
+
+  if (contact.status === "OPTED_OUT") {
+    return { contactId: contact.id, status: "failed", error: "Contact has opted out" };
+  }
+
+  const from = verifiedNumber.alphaSenderId || verifiedNumber.phoneNumber;
+  const messageBody = appendOptOutNotice(
+    renderTemplate(template, {
+      first_name: contact.firstName,
+      last_name: contact.lastName,
+      business_name: business.name,
+    })
+  );
+
+  try {
+    const { sid, status } = await sendSms({ from, to: contact.phone, body: messageBody });
+    await prisma.reviewRequest.create({
+      data: {
+        businessId: business.id,
+        contactId: contact.id,
+        kind: "REACTIVATION",
+        messageBody,
+        status,
+        twilioSid: sid,
+      },
+    });
+    return { contactId: contact.id, status: "sent" };
+  } catch (err) {
+    const errorMessage = (err as Error).message;
+    await prisma.reviewRequest.create({
+      data: {
+        businessId: business.id,
+        contactId: contact.id,
+        kind: "REACTIVATION",
+        messageBody,
+        status: "failed",
+        errorMessage,
+      },
+    });
+    return { contactId: contact.id, status: "failed", error: errorMessage };
+  }
+}

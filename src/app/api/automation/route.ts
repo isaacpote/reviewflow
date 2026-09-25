@@ -21,6 +21,8 @@ const schema = z.object({
   businessId: z.string(),
   enabled: z.boolean(),
   visitThreshold: z.number().int().min(1).max(100),
+  reactivationEnabled: z.boolean().optional(),
+  reactivationDays: z.number().int().min(1).max(365).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -32,16 +34,23 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { businessId, enabled, visitThreshold } = parsed.data;
+  const { businessId, enabled, visitThreshold, reactivationEnabled, reactivationDays } = parsed.data;
 
   if (!(await ownsBusiness(user.id, businessId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const data = {
+    enabled,
+    visitThreshold,
+    ...(reactivationEnabled !== undefined ? { reactivationEnabled } : {}),
+    ...(reactivationDays !== undefined ? { reactivationDays } : {}),
+  };
+
   const rule = await prisma.automationRule.upsert({
     where: { businessId },
-    update: { enabled, visitThreshold, triggerType: "VISIT_COUNT" },
-    create: { businessId, enabled, visitThreshold, triggerType: "VISIT_COUNT" },
+    update: data,
+    create: { businessId, ...data },
   });
 
   return NextResponse.json({ rule });

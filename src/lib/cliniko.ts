@@ -12,6 +12,7 @@ export type NormalizedPatient = {
   phone?: string;
   email?: string;
   visitCount: number;
+  lastVisitAt?: Date;
   raw: unknown;
 };
 
@@ -28,13 +29,14 @@ function nextMockVisitCount(externalId: string, startAt: number): number {
 }
 
 function mockPatients(): NormalizedPatient[] {
-  const names: [string, string, number][] = [
-    ["Sam", "Wilson", 3], // one sync away from crossing a 4-visit threshold
-    ["Jamie", "Lee", 1],
-    ["Priya", "Singh", 4],
-    ["Alex", "Chen", 2],
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+  const names: [string, string, number, number][] = [
+    ["Sam", "Wilson", 3, 2], // one sync away from crossing a 4-visit threshold
+    ["Jamie", "Lee", 1, 1],
+    ["Priya", "Singh", 4, 45], // hasn't visited in 45 days — ready to demo reactivation
+    ["Alex", "Chen", 2, 5],
   ];
-  return names.map(([firstName, lastName, startAt], i) => {
+  return names.map(([firstName, lastName, startAt, lastVisitDaysAgo], i) => {
     const externalId = `mock-cliniko-${i + 1}`;
     const visitCount = nextMockVisitCount(externalId, startAt);
     return {
@@ -44,6 +46,7 @@ function mockPatients(): NormalizedPatient[] {
       phone: `+61${400000000 + i}`,
       email: `${firstName.toLowerCase()}@example.com`,
       visitCount,
+      lastVisitAt: daysAgo(lastVisitDaysAgo),
       raw: { mock: true, firstName, lastName, visitCount },
     };
   });
@@ -87,7 +90,7 @@ export async function fetchClinikoPatients(
     const data = await res.json();
     for (const p of data.patients ?? []) {
       const phone = (p.patient_phone_numbers ?? [])[0]?.number as string | undefined;
-      const visitCount = await fetchClinikoVisitCount(credentials, p.id, headers);
+      const { count: visitCount, lastVisitAt } = await fetchClinikoVisitStats(credentials, p.id, headers);
       results.push({
         externalId: String(p.id),
         firstName: p.first_name,
@@ -95,6 +98,7 @@ export async function fetchClinikoPatients(
         phone,
         email: p.email ?? undefined,
         visitCount,
+        lastVisitAt,
         raw: p,
       });
     }
@@ -111,27 +115,32 @@ export async function fetchClinikoPatients(
  * it in production. Field shape (cancelled_at, appointment_start) is
  * Cliniko's documented shape as of writing, not verified live.
  */
-async function fetchClinikoVisitCount(
+async function fetchClinikoVisitStats(
   credentials: ClinikoCredentials,
   patientId: string | number,
   headers: Record<string, string>
-): Promise<number> {
+): Promise<{ count: number; lastVisitAt?: Date }> {
   let count = 0;
+  let lastVisitAt: Date | undefined;
   let url: string | null =
     `https://api.${credentials.shard}.cliniko.com/v1/patients/${patientId}/appointments?per_page=100`;
 
   while (url) {
     const res: Response = await fetch(url, { headers });
-    if (!res.ok) return count; // don't fail the whole sync over one patient's visit history
+    if (!res.ok) return { count, lastVisitAt }; // don't fail the whole sync over one patient's visit history
     const data = await res.json();
     for (const appt of data.appointments ?? []) {
-      const isPast = new Date(appt.appointment_start).getTime() < Date.now();
-      if (!appt.cancelled_at && isPast) count += 1;
+      const start = new Date(appt.appointment_start);
+      const isPast = start.getTime() < Date.now();
+      if (!appt.cancelled_at && isPast) {
+        count += 1;
+        if (!lastVisitAt || start > lastVisitAt) lastVisitAt = start;
+      }
     }
     url = data.links?.next ?? null;
   }
 
-  return count;
+  return { count, lastVisitAt };
 }
 
 export function isValidClinikoShard(shard: string): boolean {

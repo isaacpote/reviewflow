@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { Users, Send, Clock3 } from "lucide-react";
+import Link from "next/link";
+import { Users, Send, Clock3, ArrowRight } from "lucide-react";
 
 type ReviewRequest = { id: string; status: string; sentAt: string };
 type Contact = {
@@ -80,6 +81,14 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
         <Stat label="Requests sent" value={sentCount} icon={Send} />
         <Stat label="Pending" value={pending.length} icon={Clock3} />
       </div>
+
+      <Link
+        href={`/biz/${businessId}/reviews`}
+        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:border-emerald-500/50 transition"
+      >
+        <span className="text-gray-600">See review &amp; reactivation performance over time</span>
+        <ArrowRight className="h-4 w-4 text-gray-400" />
+      </Link>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
       {notice && <p className="text-sm text-emerald-600">{notice}</p>}

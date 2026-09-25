@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Phone, MessageSquare, Database, LayoutDashboard, ChevronsUpDown, LogOut, Settings, Star } from "lucide-react";
+import { Phone, MessageSquare, Database, LayoutDashboard, ChevronsUpDown, LogOut, Settings, Star, BarChart3 } from "lucide-react";
 import { useState } from "react";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -29,6 +29,7 @@ export function Sidebar({
     { href: `/biz/${businessId}/number`, label: "Number", icon: Phone },
     { href: `/biz/${businessId}/message`, label: "Message", icon: MessageSquare },
     { href: `/biz/${businessId}/crm`, label: "CRM & Contacts", icon: Database },
+    { href: `/biz/${businessId}/reviews`, label: "Reviews", icon: BarChart3 },
     { href: `/biz/${businessId}/settings`, label: "Settings", icon: Settings },
   ];
 

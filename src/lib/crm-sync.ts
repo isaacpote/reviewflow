@@ -7,7 +7,13 @@ import { checkAutomationRules } from "@/lib/automation";
 
 export async function syncCrmConnection(
   connectionId: string
-): Promise<{ imported: number; updated: number; skippedNoPhone: number; autoSent: number }> {
+): Promise<{
+  imported: number;
+  updated: number;
+  skippedNoPhone: number;
+  autoSent: number;
+  reactivationsSent: number;
+}> {
   const connection = await prisma.crmConnection.findUnique({ where: { id: connectionId } });
   if (!connection) throw new Error("Connection not found");
   if (!connection.credentialsEncrypted) throw new Error("No credentials stored for this connection");
@@ -46,6 +52,7 @@ export async function syncCrmConnection(
           phone: patient.phone,
           email: patient.email,
           visitCount: patient.visitCount,
+          lastVisitAt: patient.lastVisitAt,
           raw: JSON.stringify(patient.raw),
         },
       });
@@ -61,6 +68,7 @@ export async function syncCrmConnection(
           phone: patient.phone,
           email: patient.email,
           visitCount: patient.visitCount,
+          lastVisitAt: patient.lastVisitAt,
           raw: JSON.stringify(patient.raw),
         },
       });
@@ -73,7 +81,7 @@ export async function syncCrmConnection(
     data: { lastSyncedAt: new Date() },
   });
 
-  const { autoSent } = await checkAutomationRules(connection.businessId);
+  const { autoSent, reactivationsSent } = await checkAutomationRules(connection.businessId);
 
-  return { imported, updated, skippedNoPhone, autoSent };
+  return { imported, updated, skippedNoPhone, autoSent, reactivationsSent };
 }
