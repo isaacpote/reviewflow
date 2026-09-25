@@ -99,44 +99,6 @@ export async function registerAlphaSender(
   return { sid: sender.sid, status: "PENDING" };
 }
 
-export async function startVerification(
-  phoneNumber: string
-): Promise<{ verificationSid: string; status: string }> {
-  if (MOCK) {
-    await delay(400);
-    return { verificationSid: fakeSid("VE"), status: "pending" };
-  }
-  const client = getClient();
-  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-  if (!verifyServiceSid) {
-    throw new Error("TWILIO_VERIFY_SERVICE_SID is required to verify a number.");
-  }
-  const verification = await client.verify.v2
-    .services(verifyServiceSid)
-    .verifications.create({ to: phoneNumber, channel: "sms" });
-  return { verificationSid: verification.sid, status: verification.status };
-}
-
-export async function checkVerification(
-  phoneNumber: string,
-  code: string
-): Promise<{ status: string; approved: boolean }> {
-  if (MOCK) {
-    await delay(300);
-    const approved = code === "123456" || code.length === 6;
-    return { status: approved ? "approved" : "denied", approved };
-  }
-  const client = getClient();
-  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-  if (!verifyServiceSid) {
-    throw new Error("TWILIO_VERIFY_SERVICE_SID is required to verify a number.");
-  }
-  const check = await client.verify.v2
-    .services(verifyServiceSid)
-    .verificationChecks.create({ to: phoneNumber, code });
-  return { status: check.status, approved: check.status === "approved" };
-}
-
 export async function sendSms(params: {
   from: string;
   to: string;

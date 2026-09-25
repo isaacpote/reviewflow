@@ -11,7 +11,6 @@ type PhoneNumberRecord = {
   friendlyName: string;
   alphaSenderId: string | null;
   country: string;
-  verificationStatus: "UNVERIFIED" | "PENDING" | "VERIFIED";
   isMock: boolean;
 };
 
@@ -108,9 +107,7 @@ export default function NumberPage(props: PageProps<"/biz/[id]/number">) {
         ) : (
           <ul className="space-y-2">
             {numbers.map((n) => (
-              <NumberRow key={n.id} number={n} onUpdate={(updated) =>
-                setNumbers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))
-              } />
+              <NumberRow key={n.id} number={n} />
             ))}
           </ul>
         )}
@@ -153,7 +150,7 @@ export default function NumberPage(props: PageProps<"/biz/[id]/number">) {
               <button
                 onClick={search}
                 disabled={searching}
-                className="w-full rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium py-2 disabled:opacity-60"
+                className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 disabled:opacity-60"
               >
                 {searching ? "Searching…" : "Search numbers"}
               </button>
@@ -215,64 +212,9 @@ export default function NumberPage(props: PageProps<"/biz/[id]/number">) {
   );
 }
 
-function NumberRow({
-  number,
-  onUpdate,
-}: {
-  number: PhoneNumberRecord;
-  onUpdate: (n: PhoneNumberRecord) => void;
-}) {
-  const [showVerify, setShowVerify] = useState(false);
-  const [code, setCode] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function startVerify() {
-    setSending(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/numbers/verify/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumberId: number.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      onUpdate({ ...number, verificationStatus: "PENDING" });
-      setShowVerify(true);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function checkCode() {
-    setSending(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/numbers/verify/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumberId: number.id, code }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (data.approved) {
-        onUpdate(data.number);
-        setShowVerify(false);
-      } else {
-        setError("Code not accepted — try again.");
-      }
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSending(false);
-    }
-  }
-
+function NumberRow({ number }: { number: PhoneNumberRecord }) {
   return (
-    <li className="rounded-xl border border-black/10 dark:border-white/10 p-4">
+    <li className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="text-sm font-medium">
@@ -288,51 +230,10 @@ function NumberRow({
             {number.alphaSenderId && <> · sends as &ldquo;{number.alphaSenderId}&rdquo;</>}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <StatusBadge status={number.verificationStatus} />
-          {number.verificationStatus !== "VERIFIED" && (
-            <button
-              onClick={startVerify}
-              disabled={sending}
-              className="text-xs font-medium rounded-lg border border-black/10 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-60"
-            >
-              {number.verificationStatus === "PENDING" ? "Enter code" : "Verify number"}
-            </button>
-          )}
-        </div>
+        <span className="text-[11px] font-medium uppercase tracking-wide rounded-full px-2 py-1 bg-emerald-50 text-emerald-700">
+          Active
+        </span>
       </div>
-
-      {showVerify && (
-        <div className="mt-3 flex items-center gap-2">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="6-digit code"
-            className="rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3 py-1.5 text-sm w-32"
-          />
-          <button
-            onClick={checkCode}
-            disabled={sending}
-            className="text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 disabled:opacity-60"
-          >
-            Confirm
-          </button>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-        </div>
-      )}
     </li>
-  );
-}
-
-function StatusBadge({ status }: { status: PhoneNumberRecord["verificationStatus"] }) {
-  const styles = {
-    VERIFIED: "bg-emerald-500/15 text-emerald-600",
-    PENDING: "bg-amber-500/15 text-amber-600",
-    UNVERIFIED: "bg-gray-500/15 text-gray-500",
-  };
-  return (
-    <span className={`text-[11px] font-medium uppercase tracking-wide rounded-full px-2 py-1 ${styles[status]}`}>
-      {status}
-    </span>
   );
 }

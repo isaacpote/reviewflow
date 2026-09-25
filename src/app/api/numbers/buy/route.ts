@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
         country,
         twilioSid: purchased.sid,
         isMock: isTwilioMocked,
+        // A number bought via the Twilio API is immediately usable — there's
+        // nothing to verify. Business legitimacy is covered by ABN + KYC.
+        verificationStatus: "VERIFIED",
       },
     });
 
