@@ -4,6 +4,7 @@ import { Phone, Puzzle, LayoutDashboard, Settings, BarChart3, RefreshCw, Message
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
+import { TopBar } from "@/components/TopBar";
 
 const MOBILE_NAV = [
   { seg: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,7 +59,9 @@ export default async function BizLayout(props: LayoutProps<"/biz/[id]">) {
           })}
         </nav>
 
-        <main className="flex-1 px-6 sm:px-10 py-8 overflow-y-auto">{props.children}</main>
+        <TopBar businessId={id} userEmail={user.email} />
+
+        <main className="flex-1 px-6 sm:px-10 pb-8 overflow-y-auto">{props.children}</main>
       </div>
     </div>
   );

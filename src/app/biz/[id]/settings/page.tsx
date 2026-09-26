@@ -110,7 +110,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
     <div className="max-w-2xl space-y-10">
       <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
         <div>
           <h2 className="text-base font-semibold">Business details</h2>
           <p className="text-sm text-gray-500 mt-0.5">{TYPE_LABEL[business.type] ?? business.type}</p>
@@ -121,7 +121,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)] focus:ring-2 focus:ring-emerald-500/50"
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
             value={reviewLink}
             onChange={(e) => setReviewLink(e.target.value)}
             placeholder="https://g.page/r/your-business/review"
-            className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)] focus:ring-2 focus:ring-emerald-500/50"
           />
           <p className="text-xs text-gray-500 mt-1.5">
             The link sent to customers to leave a review. Find yours by searching your business on
@@ -143,7 +143,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+            className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
@@ -152,7 +152,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
         <div>
           <h2 className="text-base font-semibold">Notifications</h2>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -177,7 +177,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
               value={notifyEmail}
               onChange={(e) => setNotifyEmail(e.target.value)}
               placeholder="you@business.com"
-              className="w-full max-w-xs rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full max-w-xs rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm outline-none shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)] focus:ring-2 focus:ring-emerald-500/50"
             />
           </div>
         )}
@@ -186,7 +186,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
           <button
             onClick={saveNotifications}
             disabled={savingNotify}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+            className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
           >
             {savingNotify ? "Saving…" : "Save changes"}
           </button>
@@ -195,7 +195,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
         <h2 className="text-base font-semibold">Verification</h2>
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Identity (KYC)</span>
@@ -210,12 +210,12 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
         </p>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
         <h2 className="text-base font-semibold mb-1">Account</h2>
         <p className="text-sm text-gray-500 mb-4">Log out of ReviewFlow on this device.</p>
         <button
           onClick={logout}
-          className="rounded-lg border border-gray-200 text-sm font-medium px-4 py-2 hover:bg-gray-50 transition"
+          className="rounded-full border border-gray-200 text-sm font-medium px-5 py-2 hover:bg-gray-50 transition"
         >
           Log out
         </button>

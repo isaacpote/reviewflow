@@ -100,7 +100,7 @@ export function GoogleBusinessCard({
   if (!state) return null;
 
   return (
-    <div className="rounded-xl border border-black/10 dark:border-white/10 p-4 mb-3">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 mb-3 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       {state.googlePlaceId ? (
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
@@ -130,7 +130,7 @@ export function GoogleBusinessCard({
                   <button
                     onClick={() => connect(loc)}
                     disabled={connecting === loc.placeId}
-                    className="w-full text-left rounded-lg border border-black/10 dark:border-white/15 px-3 py-2 hover:border-emerald-500 transition disabled:opacity-60"
+                    className="w-full text-left rounded-2xl border border-gray-200 px-3.5 py-2 hover:border-emerald-500 transition disabled:opacity-60"
                   >
                     <div className="text-sm font-medium">{loc.name}</div>
                     <div className="text-xs text-gray-500">{loc.address}</div>
@@ -150,7 +150,7 @@ export function GoogleBusinessCard({
           </div>
           <button
             onClick={startPicking}
-            className="text-sm font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5"
+            className="text-sm font-medium rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5"
           >
             Connect Google Business Profile
           </button>

@@ -115,7 +115,7 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-mono"
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
             />
             <p className="text-[11px] text-gray-500 mt-1">
               {body.length} characters — a &ldquo;Reply STOP to opt out&rdquo; notice is added
@@ -130,14 +130,14 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
                 type="button"
                 title={v.desc}
                 onClick={() => setBody((b) => b + v.token)}
-                className="text-[11px] font-mono rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50"
+                className="text-[11px] font-mono rounded-full border border-gray-200 px-3 py-1 text-emerald-600 hover:bg-emerald-50"
               >
                 {v.token}
               </button>
             ))}
           </div>
 
-          <div className="rounded-xl border border-gray-200 p-4">
+          <div className="rounded-2xl border border-gray-200 p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -155,7 +155,7 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
                   max={365}
                   value={days}
                   onChange={(e) => setDays(Number(e.target.value))}
-                  className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-center"
+                  className="w-16 rounded-2xl border border-gray-200 bg-white px-2 py-1 text-sm text-center shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
                 />
                 <span className="text-sm text-gray-500">days</span>
                 <span className="text-xs text-gray-500">
@@ -170,7 +170,7 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+            className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
@@ -179,8 +179,8 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
 
         <div>
           <div className="text-xs font-medium text-gray-500 mb-2">Live preview</div>
-          <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
-            <div className="rounded-2xl rounded-bl-sm bg-emerald-600 text-white text-sm px-3.5 py-2.5 max-w-[85%] shadow-sm">
+          <div className="rounded-2xl border border-gray-200 p-4 bg-white shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+            <div className="rounded-2xl rounded-bl-sm bg-emerald-500 text-white text-sm px-3.5 py-2.5 max-w-[85%] shadow-sm">
               {preview}
             </div>
             <div className="text-[10px] text-gray-400 mt-2">as it will appear to Priya</div>

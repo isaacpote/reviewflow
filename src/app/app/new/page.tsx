@@ -41,7 +41,7 @@ export default function NewBusinessPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-black/10 dark:border-white/10 p-6 sm:p-8 space-y-6 bg-white/50 dark:bg-white/[0.03]"
+          className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 space-y-6 shadow-[0_4px_20px_rgba(124,92,252,0.06)]"
         >
           <div>
             <label className="block text-sm font-medium mb-1.5">Business name</label>
@@ -49,7 +49,7 @@ export default function NewBusinessPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Northside Physio"
-              className="w-full rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)] focus:ring-2 focus:ring-emerald-500/50"
             />
           </div>
 
@@ -59,10 +59,10 @@ export default function NewBusinessPage() {
               {BUSINESS_TYPES.map((t) => (
                 <label
                   key={t.value}
-                  className={`flex items-start gap-3 rounded-xl border p-3.5 cursor-pointer transition ${
+                  className={`flex items-start gap-3 rounded-2xl border p-3.5 cursor-pointer transition ${
                     type === t.value
-                      ? "border-emerald-500 bg-emerald-500/5"
-                      : "border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20"
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <input
@@ -74,7 +74,7 @@ export default function NewBusinessPage() {
                   />
                   <span>
                     <span className="block text-sm font-medium">{t.label}</span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <span className="block text-xs text-gray-500 mt-0.5">
                       {t.blurb}
                     </span>
                   </span>
@@ -88,7 +88,7 @@ export default function NewBusinessPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-medium py-2.5 transition"
+            className="w-full rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white text-sm font-medium py-2.5 transition"
           >
             {loading ? "Creating…" : "Create business →"}
           </button>

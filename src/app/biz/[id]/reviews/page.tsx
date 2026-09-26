@@ -120,7 +120,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                   value={reviewLink}
                   onChange={(e) => setReviewLink(e.target.value)}
                   placeholder="https://g.page/r/your-google-review-link"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
                 />
                 <p className="text-[11px] text-gray-500 mt-1">
                   Usually a Google Business Profile review link, but any URL works (Facebook, Trustpilot, etc).
@@ -135,7 +135,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                 </button>
 
                 {showPlaceIdHelper && (
-                  <div className="mt-2 rounded-lg border border-gray-200 p-3 space-y-2">
+                  <div className="mt-2 rounded-2xl border border-gray-200 p-3 space-y-2">
                     <p className="text-[11px] text-gray-500">
                       This generates the fastest possible link — it skips straight to Google&apos;s
                       star-rating screen (and opens the Maps app directly on mobile) instead of
@@ -148,7 +148,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                         value={placeId}
                         onChange={(e) => setPlaceId(e.target.value)}
                         placeholder="ChIJ..."
-                        className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono"
+                        className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
                       />
                       <button
                         type="button"
@@ -157,7 +157,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                           setReviewLink(reviewLinkForPlace(placeId.trim()));
                           setShowPlaceIdHelper(false);
                         }}
-                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 disabled:opacity-40"
+                        className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium px-4 disabled:opacity-40"
                       >
                         Use this
                       </button>
@@ -186,7 +186,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={5}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-mono"
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
             />
             <p className="text-[11px] text-gray-500 mt-1">
               {body.length} characters — a &ldquo;Reply STOP to opt out&rdquo; notice is added
@@ -201,14 +201,14 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                 type="button"
                 title={v.desc}
                 onClick={() => setBody((b) => b + v.token)}
-                className="text-[11px] font-mono rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50"
+                className="text-[11px] font-mono rounded-full border border-gray-200 px-3 py-1 text-emerald-600 hover:bg-emerald-50"
               >
                 {v.token}
               </button>
             ))}
           </div>
 
-          <div className="rounded-xl border border-gray-200 p-4">
+          <div className="rounded-2xl border border-gray-200 p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -226,7 +226,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                   max={100}
                   value={threshold}
                   onChange={(e) => setThreshold(Number(e.target.value))}
-                  className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-center"
+                  className="w-16 rounded-2xl border border-gray-200 bg-white px-2 py-1 text-sm text-center shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
                 />
                 <span className="text-xs text-gray-500">
                   — needs a Cliniko or Nookal connection under Integrations for visit history.
@@ -240,7 +240,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+            className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
@@ -249,8 +249,8 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
 
         <div>
           <div className="text-xs font-medium text-gray-500 mb-2">Live preview</div>
-          <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
-            <div className="rounded-2xl rounded-bl-sm bg-emerald-600 text-white text-sm px-3.5 py-2.5 max-w-[85%] shadow-sm">
+          <div className="rounded-2xl border border-gray-200 p-4 bg-white shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+            <div className="rounded-2xl rounded-bl-sm bg-emerald-500 text-white text-sm px-3.5 py-2.5 max-w-[85%] shadow-sm">
               {preview}
             </div>
             <div className="text-[10px] text-gray-400 mt-2">as it will appear to Sam</div>

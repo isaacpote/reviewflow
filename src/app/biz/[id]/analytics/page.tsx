@@ -38,13 +38,13 @@ export default function AnalyticsPage(props: PageProps<"/biz/[id]/analytics">) {
         <Stat label="Contacts won back" value={data.reactivatedCount} icon={TrendingUp} />
       </div>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-5">
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
         <h2 className="text-sm font-semibold mb-1">Last 14 days</h2>
         <p className="text-xs text-gray-500 mb-4">Messages sent per day, by type.</p>
         <ActivityChart days={data.days} />
       </section>
 
-      <section className="rounded-2xl border border-dashed border-gray-200 p-5">
+      <section className="rounded-2xl border border-dashed border-gray-200 p-5 bg-white">
         <h2 className="text-sm font-semibold mb-1">Actual star ratings</h2>
         <p className="text-xs text-gray-500">
           Real review counts and star ratings need a connected Google Business Profile, which
@@ -67,10 +67,10 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div className="flex items-center justify-between">
         <div className="text-2xl font-semibold">{value}</div>
-        <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center">
           <Icon className="h-4 w-4 text-emerald-600" />
         </div>
       </div>
@@ -79,8 +79,8 @@ function Stat({
   );
 }
 
-const REVIEW_COLOR = "#2563eb"; // matches --color-emerald-600 (primary blue)
-const REACTIVATION_COLOR = "#16a34a"; // matches --color-blue-500 (secondary green)
+const REVIEW_COLOR = "#7c5cfc"; // matches --color-emerald-500 (primary violet)
+const REACTIVATION_COLOR = "#ffb86b"; // matches --color-blue-500 (peach accent)
 
 function ActivityChart({ days }: { days: DayBucket[] }) {
   const width = 720;
@@ -102,7 +102,7 @@ function ActivityChart({ days }: { days: DayBucket[] }) {
           y1={height - padding.bottom}
           x2={width - padding.right}
           y2={height - padding.bottom}
-          stroke="#e2e8f0"
+          stroke="#eeeef4"
           strokeWidth={1}
         />
         {days.map((d, i) => {
@@ -141,7 +141,7 @@ function ActivityChart({ days }: { days: DayBucket[] }) {
                   y={height - 6}
                   textAnchor="middle"
                   fontSize={9}
-                  fill="#94a3b8"
+                  fill="#9a94b8"
                 >
                   {d.date.slice(5)}
                 </text>

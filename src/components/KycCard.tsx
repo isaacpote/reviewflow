@@ -60,7 +60,7 @@ export function KycCard({ businessId }: { businessId: string }) {
   if (!state) return null;
 
   return (
-    <div className="rounded-2xl border border-black/10 dark:border-white/10 p-5 mt-3">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 mt-3 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
         Identity verification
       </div>
@@ -97,7 +97,7 @@ export function KycCard({ businessId }: { businessId: string }) {
           <button
             onClick={start}
             disabled={starting}
-            className="text-sm font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 disabled:opacity-60"
+            className="text-sm font-medium rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 disabled:opacity-60"
           >
             {starting ? "Starting…" : "Verify identity"}
           </button>

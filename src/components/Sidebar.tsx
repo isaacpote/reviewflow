@@ -38,7 +38,7 @@ export function Sidebar({
     <aside className="hidden sm:flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white">
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shrink-0">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white shrink-0 shadow-[0_4px_12px_rgba(124,92,252,0.35)]">
             <Star className="h-4 w-4 fill-white" />
           </span>
           <span className="font-semibold text-[15px] tracking-tight">ReviewFlow</span>
@@ -48,7 +48,7 @@ export function Sidebar({
       <div className="px-3">
         <Link
           href="/app"
-          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 hover:border-emerald-500/50 transition"
+          className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 hover:border-emerald-500/50 transition"
         >
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">{businessName}</div>
@@ -66,10 +66,10 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              className={`flex items-center gap-2.5 rounded-full px-4 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "text-gray-600 hover:bg-gray-50"
+                  ? "bg-emerald-50 text-emerald-600"
+                  : "text-gray-500 hover:bg-gray-50"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -102,7 +102,7 @@ function UserFooter({ userEmail }: { userEmail: string }) {
         onClick={logout}
         disabled={loggingOut}
         title="Log out"
-        className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition disabled:opacity-60"
+        className="shrink-0 p-1.5 rounded-full text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition disabled:opacity-60"
       >
         <LogOut className="h-4 w-4" />
       </button>

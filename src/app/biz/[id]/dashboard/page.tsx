@@ -24,10 +24,13 @@ type ActivityEvent = {
   contact: { firstName: string | null; lastName: string | null };
 };
 
+type Trend = { sparkline: number[]; trendPct: number };
+
 export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
   const { id: businessId } = use(props.params);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [trends, setTrends] = useState<{ contacts: Trend; sent: Trend } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,9 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
     fetch(`/api/activity?businessId=${businessId}`)
       .then((r) => r.json())
       .then((data) => setActivity(data.events));
+    fetch(`/api/dashboard-summary?businessId=${businessId}`)
+      .then((r) => r.json())
+      .then(setTrends);
   }
 
   useEffect(refresh, [businessId]);
@@ -88,8 +94,8 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
       <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
       <div className="grid grid-cols-3 gap-4">
-        <Stat label="Total contacts" value={contacts.length} icon={Users} />
-        <Stat label="Requests sent" value={sentCount} icon={Send} />
+        <Stat label="Total contacts" value={contacts.length} icon={Users} trend={trends?.contacts} />
+        <Stat label="Requests sent" value={sentCount} icon={Send} trend={trends?.sent} />
         <Stat label="Pending" value={pending.length} icon={Clock3} />
       </div>
 
@@ -104,14 +110,14 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
               <button
                 onClick={() => send(Array.from(selected))}
                 disabled={sending || selected.size === 0}
-                className="text-sm font-medium rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-40"
+                className="text-sm font-medium rounded-full border border-emerald-200 text-emerald-600 bg-white px-4 py-1.5 disabled:opacity-40"
               >
                 Send to selected ({selected.size})
               </button>
               <button
                 onClick={() => send()}
                 disabled={sending || pending.length === 0}
-                className="text-sm font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 disabled:opacity-40"
+                className="text-sm font-medium rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 disabled:opacity-40"
               >
                 {sending ? "Sending…" : `Send to all pending (${pending.length})`}
               </button>
@@ -119,11 +125,11 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
           </div>
 
           {contacts.length === 0 ? (
-            <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-xl p-6 text-center">
-              No contacts yet — import some from the CRM & Contacts tab.
+            <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl p-6 text-center">
+              No contacts yet — import some from the Integrations tab.
             </p>
           ) : (
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -181,13 +187,13 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
         <div className="space-y-4">
           <Link
             href={`/biz/${businessId}/analytics`}
-            className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:border-emerald-500/50 transition"
+            className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm hover:border-emerald-500/50 transition shadow-[0_4px_20px_rgba(124,92,252,0.06)]"
           >
             <span className="text-gray-600">Review &amp; reactivation performance</span>
             <ArrowRight className="h-4 w-4 text-gray-400 shrink-0" />
           </Link>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
             <h3 className="text-sm font-semibold mb-3">Activity</h3>
             {activity.length === 0 ? (
               <p className="text-xs text-gray-500">Nothing sent yet.</p>
@@ -232,19 +238,60 @@ function Stat({
   label,
   value,
   icon: Icon,
+  trend,
 }: {
   label: string;
   value: number;
   icon: React.ComponentType<{ className?: string }>;
+  trend?: Trend;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <div className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-        <Icon className="h-4 w-4 text-emerald-600" />
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+      <div className="flex items-start justify-between">
+        <div className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-emerald-600" />
+        </div>
+        {trend && (
+          <span
+            className={`text-[11px] font-semibold rounded-full px-2 py-0.5 ${
+              trend.trendPct >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-500/10 text-red-500"
+            }`}
+          >
+            {trend.trendPct >= 0 ? "↑" : "↓"} {Math.abs(trend.trendPct)}%
+          </span>
+        )}
       </div>
-      <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+      <div className="flex items-end justify-between mt-3">
+        <div>
+          <div className="text-2xl font-semibold">{value}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+        </div>
+        {trend && <Sparkline data={trend.sparkline} />}
+      </div>
     </div>
+  );
+}
+
+function Sparkline({ data }: { data: number[] }) {
+  const width = 64;
+  const height = 28;
+  const max = Math.max(1, ...data);
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1 || 1)) * width;
+    const y = height - (v / max) * (height - 4) - 2;
+    return `${x},${y}`;
+  });
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-16 h-7 shrink-0" aria-hidden="true">
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke="var(--color-emerald-500)"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

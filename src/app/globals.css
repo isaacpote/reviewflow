@@ -5,50 +5,56 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f5f3fb;
+  --foreground: #2d2a3e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-inter);
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
 
-  /* Slate ink / white paper — clean SaaS light theme */
-  --color-black: #0f172a;
+  /* Ink / paper — headings read as near-black ink, cards are pure white */
+  --color-black: #2d2a3e;
   --color-white: #ffffff;
 
-  /* Slate — muted text, borders, secondary UI */
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #94a3b8;
-  --color-gray-500: #64748b;
-  --color-gray-600: #475569;
-  --color-gray-700: #334155;
-  --color-gray-800: #1e293b;
+  /* Gray-violet — muted text, borders, secondary UI */
+  --color-gray-50: #f8f7fc;
+  --color-gray-100: #f1effa;
+  --color-gray-200: #eeeef4;
+  --color-gray-300: #dcd9ea;
+  --color-gray-400: #b4afcb;
+  --color-gray-500: #9a94b8;
+  --color-gray-600: #7a7495;
+  --color-gray-700: #5c5775;
+  --color-gray-800: #2d2a3e;
 
-  /* Blue — the primary accent */
-  --color-emerald-50: #eff6ff;
-  --color-emerald-400: #60a5fa;
-  --color-emerald-500: #3b82f6;
-  --color-emerald-600: #2563eb;
-  --color-emerald-700: #1d4ed8;
+  /* Violet — the primary accent */
+  --color-emerald-50: #efeafe;
+  --color-emerald-400: #9b82fd;
+  --color-emerald-500: #7c5cfc;
+  --color-emerald-600: #6a47f0;
+  --color-emerald-700: #5a3fd6;
 
-  /* Green — secondary accent, used for "auto-sent" / success indicators */
-  --color-blue-500: #16a34a;
+  /* Peach — secondary accent, used for "auto-sent" / status badges */
+  --color-blue-500: #ffb86b;
 
-  /* Red — error/danger */
-  --color-red-500: #ef4444;
+  /* Soft red/pink — error/danger */
+  --color-red-500: #ff7a7a;
+
+  /* Peach, reused for amber (pending/mock badges) to stay in-palette */
+  --color-amber-500: #ffb86b;
+  --color-amber-600: #f5a053;
+
+  --radius-2xl: 1.25rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -21,7 +21,7 @@ export default async function AppHome() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <header className="flex items-center justify-between px-6 sm:px-10 py-4 border-b border-black/10 dark:border-white/10">
+      <header className="flex items-center justify-between px-6 sm:px-10 py-4 border-b border-gray-200 bg-white">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           ReviewFlow
         </Link>
@@ -37,14 +37,14 @@ export default async function AppHome() {
             <h1 className="text-lg font-semibold">Your businesses</h1>
             <Link
               href="/app/new"
-              className="text-sm font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2"
+              className="text-sm font-medium rounded-full bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2"
             >
               + Add business
             </Link>
           </div>
 
           {businesses.length === 0 ? (
-            <p className="text-sm text-gray-500 border border-dashed border-black/10 dark:border-white/15 rounded-xl p-8 text-center">
+            <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl p-8 text-center">
               No businesses yet.
             </p>
           ) : (
@@ -53,7 +53,7 @@ export default async function AppHome() {
                 <li key={b.id}>
                   <Link
                     href={`/biz/${b.id}/number`}
-                    className="flex items-center justify-between rounded-xl border border-black/10 dark:border-white/10 p-4 hover:border-emerald-500 transition"
+                    className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)] hover:border-emerald-500 transition"
                   >
                     <div>
                       <div className="text-sm font-medium">{b.name}</div>

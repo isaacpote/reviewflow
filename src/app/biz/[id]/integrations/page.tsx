@@ -65,7 +65,7 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
       <section>
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Connected</h2>
         {connections.length === 0 ? (
-          <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-xl p-6 text-center">
+          <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl p-6 text-center">
             No connections yet.
           </p>
         ) : (
@@ -73,10 +73,10 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
             {connections.map((c) => {
               const Icon = TYPE_ICON[c.type];
               return (
-                <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                <div key={c.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <span className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
                         <Icon className="h-4 w-4 text-emerald-600" />
                       </span>
                       <div className="min-w-0">
@@ -152,7 +152,7 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
           <WebhookConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
         )}
 
-        <div className="mt-8 rounded-xl border border-dashed border-gray-200 p-4">
+        <div className="mt-8 rounded-2xl border border-dashed border-gray-200 p-4">
           <div className="text-xs font-medium text-gray-500 mb-2">Coming soon</div>
           <div className="flex flex-wrap gap-2">
             {NATIVE_CRMS.map((c) => (
@@ -190,10 +190,10 @@ function IntegrationOption({
   return (
     <button
       onClick={onClick}
-      className="text-left rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-500 transition"
+      className="text-left rounded-2xl border border-gray-200 bg-white p-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)] hover:border-emerald-500 transition"
     >
       <div className="flex items-center gap-3 mb-1">
-        <span className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+        <span className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-emerald-600" />
         </span>
         <div className="text-sm font-medium">{label}</div>
@@ -213,7 +213,7 @@ function WebhookUrl({ token }: { token: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="text-[11px] font-mono rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50 shrink-0"
+      className="text-[11px] font-mono rounded-full border border-gray-200 px-3 py-1 hover:bg-gray-50 shrink-0"
     >
       {copied ? "Copied!" : "Copy URL"}
     </button>
@@ -246,7 +246,7 @@ function FieldMappingInputs({
             <select
               value={mapping[f.key]}
               onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
             >
               <option value="">— not mapped —</option>
               {sourceOptions.map((o) => (
@@ -260,7 +260,7 @@ function FieldMappingInputs({
               value={mapping[f.key]}
               onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
               placeholder={`JSON key, e.g. "${f.key}"`}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono"
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
             />
           )}
         </div>
@@ -327,13 +327,13 @@ function CsvConnectionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 space-y-4 mt-2">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div>
         <label className="block text-xs font-medium mb-1">Connection name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
 
@@ -366,7 +366,7 @@ function CsvConnectionForm({
         <button
           onClick={submit}
           disabled={submitting || rows.length === 0}
-          className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
         >
           {submitting ? "Importing…" : `Import ${rows.length || ""} contacts`}
         </button>
@@ -416,13 +416,13 @@ function WebhookConnectionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 space-y-4 mt-2">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div>
         <label className="block text-xs font-medium mb-1">Connection name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
       <div>
@@ -443,7 +443,7 @@ function WebhookConnectionForm({
         <button
           onClick={submit}
           disabled={submitting}
-          className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
         >
           {submitting ? "Creating…" : "Create webhook"}
         </button>
@@ -496,13 +496,13 @@ function ClinikoConnectionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 space-y-4 mt-2">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div>
         <label className="block text-xs font-medium mb-1">Connection name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
@@ -512,7 +512,7 @@ function ClinikoConnectionForm({
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="From Cliniko → My Info → API Keys"
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
           />
         </div>
         <div>
@@ -520,7 +520,7 @@ function ClinikoConnectionForm({
           <select
             value={shard}
             onChange={(e) => setShard(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
           >
             {CLINIKO_SHARDS.map((s) => (
               <option key={s} value={s}>
@@ -541,7 +541,7 @@ function ClinikoConnectionForm({
         <button
           onClick={submit}
           disabled={submitting}
-          className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
         >
           {submitting ? "Connecting…" : "Connect & sync"}
         </button>
@@ -591,13 +591,13 @@ function NookalConnectionForm({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-5 space-y-4 mt-2">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <div>
         <label className="block text-xs font-medium mb-1">Connection name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
       <div>
@@ -606,7 +606,7 @@ function NookalConnectionForm({
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           placeholder="From Nookal → Setup → API Access"
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
 
@@ -616,7 +616,7 @@ function NookalConnectionForm({
         <button
           onClick={submit}
           disabled={submitting}
-          className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
         >
           {submitting ? "Connecting…" : "Connect & sync"}
         </button>
@@ -656,7 +656,7 @@ function SyncButton({ connectionId, onSynced }: { connectionId: string; onSynced
       <button
         onClick={sync}
         disabled={syncing}
-        className="flex items-center gap-1 text-[11px] font-medium rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50 disabled:opacity-60"
+        className="flex items-center gap-1 text-[11px] font-medium rounded-full border border-gray-200 px-2.5 py-1 hover:bg-gray-50 disabled:opacity-60"
       >
         <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
         {syncing ? "Syncing…" : "Sync"}

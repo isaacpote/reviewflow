@@ -29,11 +29,11 @@ export function SentLog({
   if (events === null) return null;
 
   if (events.length === 0) {
-    return <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-xl p-6 text-center">Nothing sent yet.</p>;
+    return <p className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl p-6 text-center">Nothing sent yet.</p>;
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
