@@ -14,8 +14,6 @@ type BusinessDetail = {
   name: string;
   type: string;
   reviewLink: string | null;
-  abn: string | null;
-  abnStatus: string | null;
   kycStatus: "PENDING" | "VERIFIED" | "FAILED" | null;
   googlePlaceId: string | null;
 };
@@ -122,10 +120,6 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
       <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4">
         <h2 className="text-base font-semibold">Verification</h2>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">ABN</span>
-          <StatusText value={business.abn ? (business.abnStatus ?? "Verified") : "Not added"} ok={!!business.abn} />
-        </div>
-        <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Identity (KYC)</span>
           <StatusText value={business.kycStatus ?? "Not started"} ok={business.kycStatus === "VERIFIED"} />
         </div>
@@ -134,7 +128,7 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
           <StatusText value={business.googlePlaceId ? "Connected" : "Not connected"} ok={!!business.googlePlaceId} />
         </div>
         <p className="text-xs text-gray-500">
-          Manage ABN and identity verification from the Number tab.
+          Manage identity verification from the Number tab.
         </p>
       </section>
 

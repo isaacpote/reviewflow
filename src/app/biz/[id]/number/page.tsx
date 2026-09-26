@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from "react";
 import type { AvailableNumber } from "@/lib/twilio";
-import { AbnCard } from "@/components/AbnCard";
 import { KycCard } from "@/components/KycCard";
 
 type PhoneNumberRecord = {
@@ -92,7 +91,6 @@ export default function NumberPage(props: PageProps<"/biz/[id]/number">) {
 
   return (
     <div className="max-w-3xl space-y-10">
-      <AbnCard businessId={businessId} />
       <KycCard businessId={businessId} />
 
       <section className="border-t border-black/10 dark:border-white/10 pt-8">
