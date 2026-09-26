@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { renderTemplate, appendOptOutNotice } from "@/lib/template";
 import { GoogleBusinessCard } from "@/components/GoogleBusinessCard";
+import { reviewLinkForPlace } from "@/lib/google-business";
 
 const VARIABLES = [
   { token: "{{first_name}}", desc: "Contact's first name" },
@@ -21,6 +22,8 @@ export default function MessagePage(props: PageProps<"/biz/[id]/message">) {
   const [businessName, setBusinessName] = useState("");
   const [reviewLink, setReviewLink] = useState("");
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [showPlaceIdHelper, setShowPlaceIdHelper] = useState(false);
+  const [placeId, setPlaceId] = useState("");
   const [body, setBody] = useState(DEFAULT_TEMPLATE);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -106,6 +109,57 @@ export default function MessagePage(props: PageProps<"/biz/[id]/message">) {
                 <p className="text-[11px] text-gray-500 mt-1">
                   Usually a Google Business Profile review link, but any URL works (Facebook, Trustpilot, etc).
                 </p>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPlaceIdHelper((v) => !v)}
+                  className="text-[11px] text-emerald-600 underline mt-2"
+                >
+                  {showPlaceIdHelper ? "Hide" : "Have your Google Place ID instead? →"}
+                </button>
+
+                {showPlaceIdHelper && (
+                  <div className="mt-2 rounded-lg border border-black/10 dark:border-white/15 p-3 space-y-2">
+                    <p className="text-[11px] text-gray-500">
+                      This generates the fastest possible link — it skips straight to Google&apos;s
+                      star-rating screen (and opens the Maps app directly on mobile) instead of
+                      the business&apos;s listing page. If someone&apos;s already signed into
+                      Google on their phone, which most people are, there&apos;s nothing else to
+                      tap through.
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        value={placeId}
+                        onChange={(e) => setPlaceId(e.target.value)}
+                        placeholder="ChIJ..."
+                        className="flex-1 rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black/20 px-3 py-2 text-sm font-mono"
+                      />
+                      <button
+                        type="button"
+                        disabled={!placeId.trim()}
+                        onClick={() => {
+                          setReviewLink(reviewLinkForPlace(placeId.trim()));
+                          setShowPlaceIdHelper(false);
+                        }}
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 disabled:opacity-40"
+                      >
+                        Use this
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-gray-500">
+                      Find your Place ID with Google&apos;s free{" "}
+                      <a
+                        href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-600 underline"
+                      >
+                        Place ID Finder
+                      </a>{" "}
+                      — search your business name, no Google account or API key needed.
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>
