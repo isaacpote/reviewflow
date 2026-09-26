@@ -1,7 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { sendSms } from "@/lib/twilio";
 import { renderTemplate, appendOptOutNotice } from "@/lib/template";
+import { sendFailureNotification } from "@/lib/notify";
 import type { Business, Contact, MessageTemplate, PhoneNumber } from "@prisma/client";
+
+function notifyOfFailure(business: Business, contact: Contact, reason: string) {
+  if (!business.notifyOnFailure || !business.notifyEmail) return;
+  sendFailureNotification({
+    to: business.notifyEmail,
+    businessName: business.name,
+    contactName: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || contact.phone,
+    reason,
+  }).catch((err) => console.error("Failed to send failure notification:", err));
+}
 
 export type SendResult = { contactId: string; status: "sent" | "failed"; error?: string };
 
@@ -70,6 +81,7 @@ export async function sendReviewRequestToContact(params: {
       }),
       prisma.contact.update({ where: { id: contact.id }, data: { status: "FAILED" } }),
     ]);
+    notifyOfFailure(business, contact, errorMessage);
     return { contactId: contact.id, status: "failed", error: errorMessage };
   }
 }
@@ -125,6 +137,7 @@ export async function sendReactivationToContact(params: {
         errorMessage,
       },
     });
+    notifyOfFailure(business, contact, errorMessage);
     return { contactId: contact.id, status: "failed", error: errorMessage };
   }
 }

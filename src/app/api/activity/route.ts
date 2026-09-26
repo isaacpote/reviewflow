@@ -12,10 +12,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const kind = req.nextUrl.searchParams.get("kind");
+  const limit = Number(req.nextUrl.searchParams.get("limit") ?? 8);
+
   const events = await prisma.reviewRequest.findMany({
-    where: { businessId },
+    where: { businessId, ...(kind === "REVIEW_REQUEST" || kind === "REACTIVATION" ? { kind } : {}) },
     orderBy: { sentAt: "desc" },
-    take: 8,
+    take: Math.min(Math.max(limit, 1), 50),
     select: {
       id: true,
       kind: true,

@@ -16,6 +16,8 @@ type BusinessDetail = {
   reviewLink: string | null;
   kycStatus: "PENDING" | "VERIFIED" | "FAILED" | null;
   googlePlaceId: string | null;
+  notifyOnFailure: boolean;
+  notifyEmail: string | null;
 };
 
 export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
@@ -29,6 +31,12 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [notifyOnFailure, setNotifyOnFailure] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [savingNotify, setSavingNotify] = useState(false);
+  const [savedNotify, setSavedNotify] = useState(false);
+  const [notifyError, setNotifyError] = useState<string | null>(null);
+
   useEffect(() => {
     fetch(`/api/business/${businessId}`)
       .then((r) => r.json())
@@ -36,6 +44,8 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
         setBusiness(data.business);
         setName(data.business.name);
         setReviewLink(data.business.reviewLink ?? "");
+        setNotifyOnFailure(data.business.notifyOnFailure);
+        setNotifyEmail(data.business.notifyEmail ?? "");
       });
   }, [businessId]);
 
@@ -60,6 +70,31 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
       setError((err as Error).message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveNotifications() {
+    if (notifyOnFailure && !notifyEmail.trim()) {
+      setNotifyError("Add an email address to receive alerts.");
+      return;
+    }
+    setSavingNotify(true);
+    setSavedNotify(false);
+    setNotifyError(null);
+    try {
+      const res = await fetch(`/api/business/${businessId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notifyOnFailure, notifyEmail: notifyEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't save changes.");
+      setBusiness(data.business);
+      setSavedNotify(true);
+    } catch (err) {
+      setNotifyError((err as Error).message);
+    } finally {
+      setSavingNotify(false);
     }
   }
 
@@ -114,6 +149,49 @@ export default function SettingsPage(props: PageProps<"/biz/[id]/settings">) {
           </button>
           {saved && <span className="text-sm text-emerald-600">Saved.</span>}
           {error && <span className="text-sm text-red-500">{error}</span>}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Notifications</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Get an email when a text fails to send, so you're not relying on a customer to tell you.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={notifyOnFailure}
+            onChange={(e) => setNotifyOnFailure(e.target.checked)}
+          />
+          <span className="text-sm font-medium">Email me when a message fails to send</span>
+        </label>
+
+        {notifyOnFailure && (
+          <div className="pl-6">
+            <label className="block text-xs font-medium mb-1.5">Alert email</label>
+            <input
+              type="email"
+              value={notifyEmail}
+              onChange={(e) => setNotifyEmail(e.target.value)}
+              placeholder="you@business.com"
+              className="w-full max-w-xs rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={saveNotifications}
+            disabled={savingNotify}
+            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+          >
+            {savingNotify ? "Saving…" : "Save changes"}
+          </button>
+          {savedNotify && <span className="text-sm text-emerald-600">Saved.</span>}
+          {notifyError && <span className="text-sm text-red-500">{notifyError}</span>}
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Phone, MessageSquare, Database, LayoutDashboard, Settings, BarChart3 } from "lucide-react";
+import { Phone, Puzzle, LayoutDashboard, Settings, BarChart3, RefreshCw, MessageSquareText } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
@@ -8,9 +8,10 @@ import { Sidebar } from "@/components/Sidebar";
 const MOBILE_NAV = [
   { seg: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { seg: "number", label: "Number", icon: Phone },
-  { seg: "message", label: "Message", icon: MessageSquare },
-  { seg: "crm", label: "CRM", icon: Database },
-  { seg: "reviews", label: "Reviews", icon: BarChart3 },
+  { seg: "integrations", label: "Integrations", icon: Puzzle },
+  { seg: "reviews", label: "Reviews", icon: MessageSquareText },
+  { seg: "reactivation", label: "Reactivation", icon: RefreshCw },
+  { seg: "analytics", label: "Analytics", icon: BarChart3 },
   { seg: "settings", label: "Settings", icon: Settings },
 ];
 

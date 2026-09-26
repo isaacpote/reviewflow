@@ -180,7 +180,7 @@ export default function DashboardPage(props: PageProps<"/biz/[id]/dashboard">) {
 
         <div className="space-y-4">
           <Link
-            href={`/biz/${businessId}/reviews`}
+            href={`/biz/${businessId}/analytics`}
             className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:border-emerald-500/50 transition"
           >
             <span className="text-gray-600">Review &amp; reactivation performance</span>

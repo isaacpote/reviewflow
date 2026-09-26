@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
 
 const schema = z.object({
   businessId: z.string(),
-  enabled: z.boolean(),
-  visitThreshold: z.number().int().min(1).max(100),
+  enabled: z.boolean().optional(),
+  visitThreshold: z.number().int().min(1).max(100).optional(),
   reactivationEnabled: z.boolean().optional(),
   reactivationDays: z.number().int().min(1).max(365).optional(),
 });
@@ -40,9 +40,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Each field is independently optional — the Reviews page only ever sends
+  // enabled/visitThreshold, and the Reactivation page only ever sends
+  // reactivationEnabled/reactivationDays, so only the fields present are updated.
   const data = {
-    enabled,
-    visitThreshold,
+    ...(enabled !== undefined ? { enabled } : {}),
+    ...(visitThreshold !== undefined ? { visitThreshold } : {}),
     ...(reactivationEnabled !== undefined ? { reactivationEnabled } : {}),
     ...(reactivationDays !== undefined ? { reactivationDays } : {}),
   };

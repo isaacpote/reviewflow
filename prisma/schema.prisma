@@ -76,6 +76,8 @@ model Business {
   kycVerifiedName   String? // name Stripe extracted from the verified document
   kycFailureReason  String?
   reactivationMessage String? // win-back SMS sent when a contact hasn't visited in N days
+  notifyOnFailure Boolean     @default(false)
+  notifyEmail     String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

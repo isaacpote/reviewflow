@@ -27,6 +27,8 @@ const patchSchema = z.object({
   reviewLink: z.string().url().optional(),
   name: z.string().min(1).optional(),
   reactivationMessage: z.string().min(1).optional(),
+  notifyOnFailure: z.boolean().optional(),
+  notifyEmail: z.string().email().or(z.literal("")).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
