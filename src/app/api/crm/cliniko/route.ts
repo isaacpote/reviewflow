@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
+  const { businessId, name, apiKey } = parsed.data;
   const shard = extractClinikoShard(apiKey);
 
   if (!(await ownsBusiness(user.id, businessId))) {
