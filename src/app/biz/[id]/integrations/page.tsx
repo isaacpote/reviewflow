@@ -455,8 +455,6 @@ function WebhookConnectionForm({
   );
 }
 
-const CLINIKO_SHARDS = ["au1", "au2", "au3", "au4", "uk1", "us1", "ca1"];
-
 function ClinikoConnectionForm({
   businessId,
   onDone,
@@ -468,7 +466,6 @@ function ClinikoConnectionForm({
 }) {
   const [name, setName] = useState("Cliniko");
   const [apiKey, setApiKey] = useState("");
-  const [shard, setShard] = useState("au4");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -483,7 +480,7 @@ function ClinikoConnectionForm({
       const res = await fetch("/api/crm/cliniko", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, name, apiKey, shard }),
+        body: JSON.stringify({ businessId, name, apiKey }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Cliniko.");
@@ -505,35 +502,18 @@ function ClinikoConnectionForm({
           className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium mb-1">API key</label>
-          <input
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="From Cliniko → My Info → API Keys"
-            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1">Shard (region)</label>
-          <select
-            value={shard}
-            onChange={(e) => setShard(e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
-          >
-            {CLINIKO_SHARDS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label className="block text-xs font-medium mb-1">API key</label>
+        <input
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="From Cliniko → My Info → API Keys"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+        <p className="text-[11px] text-gray-500 mt-1">
+          That's it — your region is detected automatically from the key.
+        </p>
       </div>
-      <p className="text-[11px] text-gray-500">
-        The shard is in your Cliniko URL, e.g. <code>au4</code> in{" "}
-        <code>yourclinic.au4.cliniko.com</code>.
-      </p>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 

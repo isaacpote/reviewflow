@@ -16,8 +16,6 @@ export type NormalizedPatient = {
   raw: unknown;
 };
 
-const CLINIKO_SHARDS = ["au1", "au2", "au3", "au4", "uk1", "us1", "ca1"] as const;
-
 // Mock-only: simulates "another visit happened" each time you hit Sync now,
 // so the automation trigger has something real to demo against.
 const mockVisitCounts = new Map<string, number>();
@@ -143,8 +141,12 @@ async function fetchClinikoVisitStats(
   return { count, lastVisitAt };
 }
 
-export function isValidClinikoShard(shard: string): boolean {
-  return (CLINIKO_SHARDS as readonly string[]).includes(shard);
+/**
+ * Cliniko API keys encode their shard as a suffix after the last hyphen
+ * (e.g. "...-au2"). Keys generated before sharding existed have no suffix
+ * and belong to au1. See https://docs.api.cliniko.com/guides/sharding.
+ */
+export function extractClinikoShard(apiKey: string): string {
+  const suffix = apiKey.slice(apiKey.lastIndexOf("-") + 1);
+  return /^[a-zA-Z]{2}\d{1,2}$/.test(suffix) ? suffix.toLowerCase() : "au1";
 }
-
-export { CLINIKO_SHARDS };

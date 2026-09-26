@@ -3,14 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, ownsBusiness } from "@/lib/auth";
 import { encryptJson } from "@/lib/crypto";
 import { syncCrmConnection } from "@/lib/crm-sync";
-import { isValidClinikoShard, CLINIKO_SHARDS } from "@/lib/cliniko";
+import { extractClinikoShard } from "@/lib/cliniko";
 import { z } from "zod";
 
 const schema = z.object({
   businessId: z.string(),
   name: z.string().min(1),
   apiKey: z.string().min(1),
-  shard: z.string(),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,16 +21,10 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const { businessId, name, apiKey, shard } = parsed.data;
+  const shard = extractClinikoShard(apiKey);
 
   if (!(await ownsBusiness(user.id, businessId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  if (!isValidClinikoShard(shard)) {
-    return NextResponse.json(
-      { error: `Shard must be one of: ${CLINIKO_SHARDS.join(", ")}` },
-      { status: 400 }
-    );
   }
 
   const connection = await prisma.crmConnection.create({
