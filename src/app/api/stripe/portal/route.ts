@@ -32,11 +32,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ mock: true });
   }
 
-  const stripe = getStripe();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: business.stripeCustomerId,
-    return_url: returnUrl,
-  });
-
-  return NextResponse.json({ mock: false, url: session.url });
+  try {
+    const stripe = getStripe();
+    const session = await stripe.billingPortal.sessions.create({
+      customer: business.stripeCustomerId,
+      return_url: returnUrl,
+    });
+    return NextResponse.json({ mock: false, url: session.url });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+  }
 }

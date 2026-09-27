@@ -52,19 +52,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const stripe = getStripe();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    subscription_data: { trial_period_days: 14, metadata: { businessId } },
-    payment_method_collection: "always",
-    customer: business.stripeCustomerId ?? undefined,
-    customer_email: business.stripeCustomerId ? undefined : user.email,
-    client_reference_id: businessId,
-    metadata: { businessId },
-    success_url: `${returnUrl}?billing=success`,
-    cancel_url: `${returnUrl}?billing=cancelled`,
-  });
-
-  return NextResponse.json({ mock: false, url: session.url });
+  try {
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: { trial_period_days: 14, metadata: { businessId } },
+      payment_method_collection: "always",
+      customer: business.stripeCustomerId || undefined,
+      customer_email: business.stripeCustomerId ? undefined : user.email,
+      client_reference_id: businessId,
+      metadata: { businessId },
+      success_url: `${returnUrl}?billing=success`,
+      cancel_url: `${returnUrl}?billing=cancelled`,
+    });
+    return NextResponse.json({ mock: false, url: session.url });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+  }
 }

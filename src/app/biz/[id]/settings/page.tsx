@@ -9,6 +9,17 @@ const TYPE_LABEL: Record<string, string> = {
   TRADIE: "Tradie / Home Services",
 };
 
+// Every API route here always returns JSON, even on error — but if
+// something upstream (e.g. a platform-level timeout) ever returns an empty
+// or non-JSON body, this avoids surfacing a cryptic browser parse error.
+async function parseJsonSafe(res: Response): Promise<Record<string, unknown>> {
+  try {
+    return await res.json();
+  } catch {
+    return { error: `Unexpected response from server (status ${res.status}).` };
+  }
+}
+
 type BusinessDetail = {
   id: string;
   name: string;
@@ -293,7 +304,7 @@ function BillingSection({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId, returnUrl: window.location.href }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't start checkout.");
       if (data.mock) {
         onChanged({
@@ -301,7 +312,7 @@ function BillingSection({
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         });
       } else {
-        window.location.href = data.url;
+        window.location.href = data.url as string;
       }
     } catch (err) {
       setError((err as Error).message);
@@ -319,7 +330,7 @@ function BillingSection({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId, returnUrl: window.location.href }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't open billing portal.");
       if (data.mock) {
         // No real portal in mock mode — offer a direct cancel instead.
@@ -328,11 +339,12 @@ function BillingSection({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ businessId }),
         });
-        const cancelData = await cancelRes.json();
+        const cancelData = await parseJsonSafe(cancelRes);
         if (!cancelRes.ok) throw new Error("Couldn't cancel subscription.");
-        onChanged({ subscriptionStatus: cancelData.business.subscriptionStatus, trialEndsAt: null });
+        const cancelledBusiness = cancelData.business as { subscriptionStatus: string | null };
+        onChanged({ subscriptionStatus: cancelledBusiness.subscriptionStatus, trialEndsAt: null });
       } else {
-        window.location.href = data.url;
+        window.location.href = data.url as string;
       }
     } catch (err) {
       setError((err as Error).message);
