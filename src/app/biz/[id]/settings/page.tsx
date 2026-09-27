@@ -380,7 +380,7 @@ function BillingSection({
           disabled={loading}
           className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
         >
-          {loading ? "Loading…" : "Start 14-day free trial"}
+          {loading ? "Loading…" : "Upgrade now"}
         </button>
       )}
     </section>

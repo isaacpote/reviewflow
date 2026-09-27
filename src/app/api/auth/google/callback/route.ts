@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 import { exchangeCodeForUserInfo } from "@/lib/google-oauth";
 
+// Two sequential external calls to Google plus several DB queries can run
+// past Vercel's default 10s function timeout on a cold start, which is
+// consistent with sign-in failing only on the very first attempt (any
+// account) and succeeding on retry once the function/DB connection is warm.
+export const maxDuration = 30;
+
 const STATE_COOKIE = "google_oauth_state";
 
 export async function GET(req: NextRequest) {
