@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import Link from "next/link";
 import { Star, RefreshCw, TrendingUp } from "lucide-react";
 
 type DayBucket = { date: string; reviewRequests: number; reactivations: number };
@@ -8,6 +9,8 @@ type Summary = {
   totalReviewRequests: number;
   totalReactivations: number;
   reactivatedCount: number;
+  avgCustomerValue: number | null;
+  estimatedValueRecovered: number | null;
   days: DayBucket[];
 };
 
@@ -31,6 +34,31 @@ export default function AnalyticsPage(props: PageProps<"/biz/[id]/analytics">) {
           The combined picture across both Reviews and Reactivation.
         </p>
       </div>
+
+      {data.estimatedValueRecovered !== null ? (
+        <section className="rounded-2xl bg-emerald-500 text-white p-5 shadow-[0_4px_20px_rgba(124,92,252,0.2)]">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-50">
+            Estimated value recovered
+          </p>
+          <p className="text-3xl font-semibold mt-1">
+            ${data.estimatedValueRecovered.toLocaleString()}
+          </p>
+          <p className="text-xs text-emerald-50 mt-1">
+            {data.reactivatedCount} customer{data.reactivatedCount === 1 ? "" : "s"} won back ×
+            ${data.avgCustomerValue} average customer value
+          </p>
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-dashed border-gray-200 p-5 bg-white">
+          <p className="text-sm text-gray-700">
+            Set an average customer value in{" "}
+            <Link href={`/biz/${businessId}/settings`} className="text-emerald-600 underline">
+              Settings
+            </Link>{" "}
+            to see the estimated dollar value of customers you&apos;ve won back.
+          </p>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Stat label="Review requests sent" value={data.totalReviewRequests} icon={Star} />

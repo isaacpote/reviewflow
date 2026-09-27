@@ -14,6 +14,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { avgCustomerValue: true },
+  });
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const since = new Date(today.getTime() - (DAYS - 1) * 24 * 60 * 60 * 1000);
@@ -57,10 +62,15 @@ export async function GET(req: NextRequest) {
     else days[idx].reactivations += 1;
   }
 
+  const avgCustomerValue = business?.avgCustomerValue ?? null;
+  const estimatedValueRecovered = avgCustomerValue !== null ? reactivatedCount * avgCustomerValue : null;
+
   return NextResponse.json({
     totalReviewRequests,
     totalReactivations,
     reactivatedCount,
+    avgCustomerValue,
+    estimatedValueRecovered,
     days,
   });
 }

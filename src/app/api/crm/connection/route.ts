@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, ownsBusiness } from "@/lib/auth";
+import { checkAutomationRules } from "@/lib/automation";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -9,6 +10,8 @@ const mappingSchema = z.object({
   last_name: z.string().optional(),
   phone: z.string(),
   email: z.string().optional(),
+  last_visit_date: z.string().optional(),
+  visit_count: z.string().optional(),
 });
 
 const schema = z.object({
@@ -45,28 +48,59 @@ export async function POST(req: NextRequest) {
   });
 
   let importedCount = 0;
+  let updatedCount = 0;
+  let autoSent = 0;
+  let reactivationsSent = 0;
   if (type === "CSV" && csvRows?.length) {
     const contacts = csvRows
       .map((row) => mapRowToContact(row, fieldMapping))
       .filter((c): c is NonNullable<typeof c> => c !== null);
 
-    if (contacts.length) {
-      await prisma.contact.createMany({
-        data: contacts.map((c) => ({
-          businessId,
-          connectionId: connection.id,
-          firstName: c.firstName,
-          lastName: c.lastName,
-          phone: c.phone,
-          email: c.email,
-          raw: JSON.stringify(c.raw),
-        })),
+    // Dedupe by phone within the business — re-uploading an updated export
+    // (e.g. with fresh visit counts) updates the same contact instead of
+    // creating a duplicate, so visit history and reactivation tracking
+    // work for businesses with no live CRM connection at all.
+    for (const c of contacts) {
+      const existing = await prisma.contact.findFirst({
+        where: { businessId, phone: c.phone },
       });
-      importedCount = contacts.length;
+      if (existing) {
+        await prisma.contact.update({
+          where: { id: existing.id },
+          data: {
+            connectionId: connection.id,
+            firstName: c.firstName ?? existing.firstName,
+            lastName: c.lastName ?? existing.lastName,
+            email: c.email ?? existing.email,
+            visitCount: c.visitCount ?? existing.visitCount,
+            lastVisitAt: c.lastVisitAt ?? existing.lastVisitAt,
+            raw: JSON.stringify(c.raw),
+          },
+        });
+        updatedCount += 1;
+      } else {
+        await prisma.contact.create({
+          data: {
+            businessId,
+            connectionId: connection.id,
+            firstName: c.firstName,
+            lastName: c.lastName,
+            phone: c.phone,
+            email: c.email,
+            visitCount: c.visitCount ?? 0,
+            lastVisitAt: c.lastVisitAt,
+            raw: JSON.stringify(c.raw),
+          },
+        });
+        importedCount += 1;
+      }
     }
+
+    await prisma.crmConnection.update({ where: { id: connection.id }, data: { lastSyncedAt: new Date() } });
+    ({ autoSent, reactivationsSent } = await checkAutomationRules(businessId));
   }
 
-  return NextResponse.json({ connection, importedCount });
+  return NextResponse.json({ connection, importedCount, updatedCount, autoSent, reactivationsSent });
 }
 
 function mapRowToContact(
@@ -75,11 +109,16 @@ function mapRowToContact(
 ) {
   const phone = mapping.phone ? row[mapping.phone] : undefined;
   if (!phone) return null;
+  const visitCountRaw = mapping.visit_count ? row[mapping.visit_count] : undefined;
+  const lastVisitRaw = mapping.last_visit_date ? row[mapping.last_visit_date] : undefined;
+  const lastVisitAt = lastVisitRaw ? new Date(lastVisitRaw) : undefined;
   return {
     firstName: mapping.first_name ? row[mapping.first_name] : undefined,
     lastName: mapping.last_name ? row[mapping.last_name] : undefined,
     phone,
     email: mapping.email ? row[mapping.email] : undefined,
+    visitCount: visitCountRaw ? Number(visitCountRaw) : undefined,
+    lastVisitAt: lastVisitAt && !isNaN(lastVisitAt.getTime()) ? lastVisitAt : undefined,
     raw: row,
   };
 }

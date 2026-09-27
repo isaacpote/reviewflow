@@ -5,9 +5,11 @@ import { checkVerificationStatus } from "@/lib/kyc";
 import type Stripe from "stripe";
 
 /**
- * Stripe calls this on verification session events — configure it in the
- * Stripe Dashboard (Developers → Webhooks) once deployed, pointing at
- * this route, subscribed to identity.verification_session.* events.
+ * Stripe calls this on verification session and subscription events —
+ * configure it in the Stripe Dashboard (Developers → Webhooks) once
+ * deployed, pointing at this route, subscribed to
+ * identity.verification_session.*, customer.subscription.*, and
+ * invoice.payment_failed events.
  */
 export async function POST(req: NextRequest) {
   if (isStripeMocked) {
@@ -43,6 +45,34 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+    }
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const businessId = session.metadata?.businessId ?? session.client_reference_id;
+    if (businessId && session.customer && session.subscription) {
+      await prisma.business.update({
+        where: { id: businessId },
+        data: {
+          stripeCustomerId: String(session.customer),
+          stripeSubscriptionId: String(session.subscription),
+        },
+      });
+    }
+  }
+
+  if (event.type.startsWith("customer.subscription.")) {
+    const subscription = event.data.object as Stripe.Subscription;
+    const businessId = subscription.metadata?.businessId;
+    if (businessId) {
+      await prisma.business.update({
+        where: { id: businessId },
+        data: {
+          subscriptionStatus: subscription.status,
+          trialEndsAt: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+        },
+      });
     }
   }
 

@@ -29,6 +29,7 @@ const patchSchema = z.object({
   reactivationMessage: z.string().min(1).optional(),
   notifyOnFailure: z.boolean().optional(),
   notifyEmail: z.string().email().or(z.literal("")).optional(),
+  avgCustomerValue: z.number().int().min(0).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

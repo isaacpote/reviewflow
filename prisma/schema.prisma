@@ -82,6 +82,11 @@ model Business {
   reactivationMessage String? // win-back SMS sent when a contact hasn't visited in N days
   notifyOnFailure Boolean     @default(false)
   notifyEmail     String?
+  avgCustomerValue Int?       // whole AUD — what a returning customer is worth, for ROI estimates
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  subscriptionStatus   String? // mirrors Stripe's subscription.status verbatim (trialing, active, past_due, canceled, ...)
+  trialEndsAt          DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

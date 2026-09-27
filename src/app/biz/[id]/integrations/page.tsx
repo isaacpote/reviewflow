@@ -274,20 +274,37 @@ function WebhookUrl({ token }: { token: string }) {
   );
 }
 
+type ContactMapping = {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  last_visit_date?: string;
+  visit_count?: string;
+};
+
 function FieldMappingInputs({
   mapping,
   setMapping,
   sourceOptions,
+  includeVisitFields,
 }: {
-  mapping: { first_name: string; last_name: string; phone: string; email: string };
-  setMapping: (m: { first_name: string; last_name: string; phone: string; email: string }) => void;
+  mapping: ContactMapping;
+  setMapping: (m: ContactMapping) => void;
   sourceOptions?: string[];
+  includeVisitFields?: boolean;
 }) {
-  const fields: { key: keyof typeof mapping; label: string; required?: boolean }[] = [
+  const fields: { key: keyof ContactMapping; label: string; required?: boolean }[] = [
     { key: "phone", label: "Phone number", required: true },
     { key: "first_name", label: "First name" },
     { key: "last_name", label: "Last name" },
     { key: "email", label: "Email" },
+    ...(includeVisitFields
+      ? ([
+          { key: "last_visit_date", label: "Last visit date" },
+          { key: "visit_count", label: "Visit count" },
+        ] as const)
+      : []),
   ];
   return (
     <div className="grid sm:grid-cols-2 gap-3">
@@ -298,7 +315,7 @@ function FieldMappingInputs({
           </label>
           {sourceOptions ? (
             <select
-              value={mapping[f.key]}
+              value={mapping[f.key] ?? ""}
               onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
               className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
             >
@@ -311,7 +328,7 @@ function FieldMappingInputs({
             </select>
           ) : (
             <input
-              value={mapping[f.key]}
+              value={mapping[f.key] ?? ""}
               onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
               placeholder={`JSON key, e.g. "${f.key}"`}
               className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
@@ -335,7 +352,14 @@ function CsvConnectionForm({
   const [name, setName] = useState("CSV import");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
-  const [mapping, setMapping] = useState({ first_name: "", last_name: "", phone: "", email: "" });
+  const [mapping, setMapping] = useState<ContactMapping>({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    email: "",
+    last_visit_date: "",
+    visit_count: "",
+  });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -352,6 +376,8 @@ function CsvConnectionForm({
         last_name: guess("last"),
         phone: guess("phone") || guess("mobile"),
         email: guess("email"),
+        last_visit_date: guess("last visit") || guess("last_visit") || guess("lastvisit"),
+        visit_count: guess("visit count") || guess("visit_count") || guess("visits"),
       });
     };
     reader.readAsText(file);
@@ -405,13 +431,14 @@ function CsvConnectionForm({
       {headers.length > 0 && (
         <div>
           <label className="block text-xs font-medium mb-2">Map columns</label>
-          <FieldMappingInputs mapping={mapping} setMapping={setMapping} sourceOptions={headers} />
+          <FieldMappingInputs mapping={mapping} setMapping={setMapping} sourceOptions={headers} includeVisitFields />
         </div>
       )}
 
       <p className="text-[11px] text-gray-500">
-        A CSV is a one-time snapshot — these contacts are sent manually from the dashboard, since
-        there&apos;s no ongoing visit data to trigger on automatically.
+        Map a visit count or last visit date column and automation can trigger off it, same as a
+        live CRM. Re-upload this same import later with updated numbers — matching contacts by
+        phone number are updated in place, not duplicated.
       </p>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
