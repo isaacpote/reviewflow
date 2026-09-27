@@ -25,6 +25,10 @@ enum ConnectionType {
   WEBHOOK
   CLINIKO
   NOOKAL
+  HALAXY
+  SPLOSE
+  FERGUS
+  DOSHII
   HUBSPOT
   GOHIGHLEVEL
 }

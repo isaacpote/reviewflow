@@ -6,12 +6,24 @@ import { Database, FileSpreadsheet, Webhook as WebhookIcon, RefreshCw } from "lu
 
 type Connection = {
   id: string;
-  type: "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | "HUBSPOT" | "GOHIGHLEVEL";
+  type:
+    | "CSV"
+    | "WEBHOOK"
+    | "CLINIKO"
+    | "NOOKAL"
+    | "HALAXY"
+    | "SPLOSE"
+    | "FERGUS"
+    | "DOSHII"
+    | "HUBSPOT"
+    | "GOHIGHLEVEL";
   name: string;
   webhookToken: string | null;
   fieldMapping: string | null;
   lastSyncedAt: string | null;
 };
+
+const SYNCED_TYPES = ["CLINIKO", "NOOKAL", "HALAXY", "SPLOSE", "FERGUS", "DOSHII"] as const;
 
 const NATIVE_CRMS = [
   { key: "HUBSPOT", label: "HubSpot" },
@@ -25,13 +37,17 @@ const NATIVE_CRMS = [
 const TYPE_ICON: Record<Connection["type"], React.ComponentType<{ className?: string }>> = {
   CLINIKO: Database,
   NOOKAL: Database,
+  HALAXY: Database,
+  SPLOSE: Database,
+  FERGUS: Database,
+  DOSHII: Database,
   CSV: FileSpreadsheet,
   WEBHOOK: WebhookIcon,
   HUBSPOT: Database,
   GOHIGHLEVEL: Database,
 };
 
-type Mode = "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | null;
+type Mode = "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | "HALAXY" | "SPLOSE" | "FERGUS" | "DOSHII" | null;
 
 export default function IntegrationsPage(props: PageProps<"/biz/[id]/integrations">) {
   const { id: businessId } = use(props.params);
@@ -50,7 +66,9 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
 
   useEffect(refresh, [businessId]);
 
-  const hasCrmSync = connections.some((c) => c.type === "CLINIKO" || c.type === "NOOKAL");
+  const hasCrmSync = connections.some((c) =>
+    (SYNCED_TYPES as readonly string[]).includes(c.type)
+  );
 
   return (
     <div className="max-w-4xl space-y-10">
@@ -90,7 +108,7 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
                       </div>
                     </div>
                     {c.type === "WEBHOOK" && c.webhookToken && <WebhookUrl token={c.webhookToken} />}
-                    {(c.type === "CLINIKO" || c.type === "NOOKAL") && (
+                    {(SYNCED_TYPES as readonly string[]).includes(c.type) && (
                       <SyncButton connectionId={c.id} onSynced={refresh} />
                     )}
                   </div>
@@ -102,7 +120,7 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
         {!hasCrmSync && connections.length > 0 && (
           <p className="text-xs text-gray-500 mt-2">
             CSV and webhook contacts don&apos;t carry visit history, so they&apos;re sent manually from
-            the dashboard — connect Cliniko or Nookal to enable automatic sending.
+            the dashboard — connect a synced CRM above to enable automatic sending.
           </p>
         )}
       </section>
@@ -125,6 +143,30 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
               onClick={() => setMode("NOOKAL")}
             />
             <IntegrationOption
+              icon={Database}
+              label="Halaxy"
+              blurb="Pull patients via your Halaxy Client ID + Secret."
+              onClick={() => setMode("HALAXY")}
+            />
+            <IntegrationOption
+              icon={Database}
+              label="Splose"
+              blurb="Pull patients via your Splose API key."
+              onClick={() => setMode("SPLOSE")}
+            />
+            <IntegrationOption
+              icon={Database}
+              label="Fergus"
+              blurb="Pull customers + job history via your Fergus personal access token."
+              onClick={() => setMode("FERGUS")}
+            />
+            <IntegrationOption
+              icon={Database}
+              label="Doshii"
+              blurb="Pull diners via your Doshii partner Client ID + Secret."
+              onClick={() => setMode("DOSHII")}
+            />
+            <IntegrationOption
               icon={FileSpreadsheet}
               label="Upload a CSV"
               blurb="Export contacts from any CRM as CSV and upload them here."
@@ -144,6 +186,18 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
         )}
         {mode === "NOOKAL" && (
           <NookalConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+        )}
+        {mode === "HALAXY" && (
+          <HalaxyConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+        )}
+        {mode === "SPLOSE" && (
+          <SploseConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+        )}
+        {mode === "FERGUS" && (
+          <FergusConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
+        )}
+        {mode === "DOSHII" && (
+          <DoshiiConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
         )}
         {mode === "CSV" && (
           <CsvConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
@@ -589,6 +643,332 @@ function NookalConnectionForm({
           className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
         />
       </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
+        >
+          {submitting ? "Connecting…" : "Connect & sync"}
+        </button>
+        <button onClick={onCancel} className="text-sm text-gray-500 px-4 py-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HalaxyConnectionForm({
+  businessId,
+  onDone,
+  onCancel,
+}: {
+  businessId: string;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("Halaxy");
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (!clientId.trim() || !clientSecret.trim()) {
+      setError("Enter your Halaxy Client ID and Secret first.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/halaxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, name, clientId, clientSecret }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Halaxy.");
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+      <div>
+        <label className="block text-xs font-medium mb-1">Connection name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1">Client ID</label>
+          <input
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="From Halaxy → Developer → API keys"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1">Client Secret</label>
+          <input
+            value={clientSecret}
+            onChange={(e) => setClientSecret(e.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+          />
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
+        >
+          {submitting ? "Connecting…" : "Connect & sync"}
+        </button>
+        <button onClick={onCancel} className="text-sm text-gray-500 px-4 py-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SploseConnectionForm({
+  businessId,
+  onDone,
+  onCancel,
+}: {
+  businessId: string;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("Splose");
+  const [apiKey, setApiKey] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (!apiKey.trim()) {
+      setError("Enter your Splose API key first.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/splose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, name, apiKey }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Splose.");
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+      <div>
+        <label className="block text-xs font-medium mb-1">Connection name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium mb-1">API key</label>
+        <input
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="From Splose → Settings → API"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
+        >
+          {submitting ? "Connecting…" : "Connect & sync"}
+        </button>
+        <button onClick={onCancel} className="text-sm text-gray-500 px-4 py-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FergusConnectionForm({
+  businessId,
+  onDone,
+  onCancel,
+}: {
+  businessId: string;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("Fergus");
+  const [accessToken, setAccessToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (!accessToken.trim()) {
+      setError("Enter your Fergus personal access token first.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/fergus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, name, accessToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Fergus.");
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+      <div>
+        <label className="block text-xs font-medium mb-1">Connection name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium mb-1">Personal access token</label>
+        <input
+          value={accessToken}
+          onChange={(e) => setAccessToken(e.target.value)}
+          placeholder="From Fergus → Account settings → API tokens"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
+        >
+          {submitting ? "Connecting…" : "Connect & sync"}
+        </button>
+        <button onClick={onCancel} className="text-sm text-gray-500 px-4 py-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DoshiiConnectionForm({
+  businessId,
+  onDone,
+  onCancel,
+}: {
+  businessId: string;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("Doshii");
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (!clientId.trim() || !clientSecret.trim()) {
+      setError("Enter your Doshii partner Client ID and Secret first.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/crm/doshii", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, name, clientId, clientSecret }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Couldn't connect to Doshii.");
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
+      <div>
+        <label className="block text-xs font-medium mb-1">Connection name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+        />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1">Client ID</label>
+          <input
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="From Doshii → Partner dashboard"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1">Client Secret</label>
+          <input
+            value={clientSecret}
+            onChange={(e) => setClientSecret(e.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
+          />
+        </div>
+      </div>
+      <p className="text-[11px] text-gray-500">
+        Doshii is a middleware hub, not a customer directory itself — whether diner contact
+        details are available depends on the specific POS connected to your venue.
+      </p>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 

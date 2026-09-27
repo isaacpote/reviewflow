@@ -1,0 +1,4 @@
+ALTER TYPE "ConnectionType" ADD VALUE 'HALAXY';
+ALTER TYPE "ConnectionType" ADD VALUE 'SPLOSE';
+ALTER TYPE "ConnectionType" ADD VALUE 'FERGUS';
+ALTER TYPE "ConnectionType" ADD VALUE 'DOSHII';

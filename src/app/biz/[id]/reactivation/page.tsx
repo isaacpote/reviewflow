@@ -159,7 +159,7 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
                 />
                 <span className="text-sm text-gray-500">days</span>
                 <span className="text-xs text-gray-500">
-                  — needs a Cliniko or Nookal connection under Integrations for visit history.
+                  — needs a synced CRM connection under Integrations for visit history.
                 </span>
               </div>
             )}

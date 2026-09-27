@@ -229,7 +229,7 @@ export default function ReviewsPage(props: PageProps<"/biz/[id]/reviews">) {
                   className="w-16 rounded-2xl border border-gray-200 bg-white px-2 py-1 text-sm text-center shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
                 />
                 <span className="text-xs text-gray-500">
-                  — needs a Cliniko or Nookal connection under Integrations for visit history.
+                  — needs a synced CRM connection under Integrations for visit history.
                 </span>
               </div>
             )}

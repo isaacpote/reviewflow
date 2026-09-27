@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { decryptJson } from "@/lib/crypto";
 import { fetchClinikoPatients, type ClinikoCredentials } from "@/lib/cliniko";
 import { fetchNookalPatients, type NookalCredentials } from "@/lib/nookal";
+import { fetchHalaxyPatients, type HalaxyCredentials } from "@/lib/halaxy";
+import { fetchSplosePatients, type SploseCredentials } from "@/lib/splose";
+import { fetchFergusCustomers, type FergusCredentials } from "@/lib/fergus";
+import { fetchDoshiiDiners, type DoshiiCredentials } from "@/lib/doshii";
 import type { NormalizedPatient } from "@/lib/cliniko";
 import { checkAutomationRules } from "@/lib/automation";
 
@@ -25,6 +29,18 @@ export async function syncCrmConnection(
   } else if (connection.type === "NOOKAL") {
     const creds = decryptJson<NookalCredentials>(connection.credentialsEncrypted);
     patients = await fetchNookalPatients(creds);
+  } else if (connection.type === "HALAXY") {
+    const creds = decryptJson<HalaxyCredentials>(connection.credentialsEncrypted);
+    patients = await fetchHalaxyPatients(creds);
+  } else if (connection.type === "SPLOSE") {
+    const creds = decryptJson<SploseCredentials>(connection.credentialsEncrypted);
+    patients = await fetchSplosePatients(creds);
+  } else if (connection.type === "FERGUS") {
+    const creds = decryptJson<FergusCredentials>(connection.credentialsEncrypted);
+    patients = await fetchFergusCustomers(creds);
+  } else if (connection.type === "DOSHII") {
+    const creds = decryptJson<DoshiiCredentials>(connection.credentialsEncrypted);
+    patients = await fetchDoshiiDiners(creds);
   } else {
     throw new Error(`${connection.type} does not support sync`);
   }
