@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { renderTemplate, appendOptOutNotice } from "@/lib/template";
 import { SentLog } from "@/components/SentLog";
+import { ReactivationResults } from "@/components/ReactivationResults";
 
 const VARIABLES = [
   { token: "{{first_name}}", desc: "Contact's first name" },
@@ -187,6 +188,12 @@ export default function ReactivationPage(props: PageProps<"/biz/[id]/reactivatio
           </div>
         </div>
       </div>
+
+      <section className="pt-2 border-t border-gray-100">
+        <h2 className="text-lg font-semibold mb-1 pt-6">Results</h2>
+        <p className="text-sm text-gray-500 mb-3">Who came back, and what it was worth.</p>
+        <ReactivationResults businessId={businessId} refreshKey={refreshKey} />
+      </section>
 
       <section className="pt-2 border-t border-gray-100">
         <h2 className="text-lg font-semibold mb-3 pt-6">Sent</h2>
