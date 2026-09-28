@@ -152,6 +152,7 @@ model Contact {
   visitCount   Int            @default(0) // from CRM sync (e.g. completed appointments)
   autoSentAtVisitCount Int?   // visitCount when automation last fired, so it only fires once per threshold
   lastVisitAt  DateTime?      // from CRM sync — most recent appointment/visit date
+  totalPaidCents Int?         // sum of paid invoice amounts from CRM (e.g. Cliniko), in cents; null if the source doesn't expose billing
   autoSentReactivationAt DateTime? // when a reactivation message last fired, so it only fires once per quiet period
   createdAt    DateTime       @default(now())
 

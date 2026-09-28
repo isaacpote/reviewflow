@@ -13,6 +13,7 @@ export type NormalizedPatient = {
   email?: string;
   visitCount: number;
   lastVisitAt?: Date;
+  totalPaidCents?: number;
   raw: unknown;
 };
 
@@ -28,13 +29,13 @@ function nextMockVisitCount(externalId: string, startAt: number): number {
 
 function mockPatients(): NormalizedPatient[] {
   const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
-  const names: [string, string, number, number][] = [
-    ["Sam", "Wilson", 3, 2], // one sync away from crossing a 4-visit threshold
-    ["Jamie", "Lee", 1, 1],
-    ["Priya", "Singh", 4, 45], // hasn't visited in 45 days — ready to demo reactivation
-    ["Alex", "Chen", 2, 5],
+  const names: [string, string, number, number, number][] = [
+    ["Sam", "Wilson", 3, 2, 8500], // one sync away from crossing a 4-visit threshold
+    ["Jamie", "Lee", 1, 1, 9000],
+    ["Priya", "Singh", 4, 45, 32000], // hasn't visited in 45 days — ready to demo reactivation
+    ["Alex", "Chen", 2, 5, 17000],
   ];
-  return names.map(([firstName, lastName, startAt, lastVisitDaysAgo], i) => {
+  return names.map(([firstName, lastName, startAt, lastVisitDaysAgo, totalPaidCents], i) => {
     const externalId = `mock-cliniko-${i + 1}`;
     const visitCount = nextMockVisitCount(externalId, startAt);
     return {
@@ -45,6 +46,7 @@ function mockPatients(): NormalizedPatient[] {
       email: `${firstName.toLowerCase()}@example.com`,
       visitCount,
       lastVisitAt: daysAgo(lastVisitDaysAgo),
+      totalPaidCents: totalPaidCents * (visitCount - startAt + 1), // grows a bit each sync, same idea as the mock visit count
       raw: { mock: true, firstName, lastName, visitCount },
     };
   });
@@ -89,6 +91,7 @@ export async function fetchClinikoPatients(
     for (const p of data.patients ?? []) {
       const phone = (p.patient_phone_numbers ?? [])[0]?.number as string | undefined;
       const { count: visitCount, lastVisitAt } = await fetchClinikoVisitStats(credentials, p.id, headers);
+      const totalPaidCents = await fetchClinikoTotalPaid(credentials, p.id, headers);
       results.push({
         externalId: String(p.id),
         firstName: p.first_name,
@@ -97,6 +100,7 @@ export async function fetchClinikoPatients(
         email: p.email ?? undefined,
         visitCount,
         lastVisitAt,
+        totalPaidCents,
         raw: p,
       });
     }
@@ -139,6 +143,40 @@ async function fetchClinikoVisitStats(
   }
 
   return { count, lastVisitAt };
+}
+
+/**
+ * Sums what a patient has actually paid, in cents, from their invoice
+ * history. Cliniko invoices carry total_including_tax and outstanding_amount
+ * as decimal-dollar strings; paid = total - outstanding, per invoice, so
+ * partially-paid invoices still count what's actually been collected.
+ * Archived/voided invoices have no outstanding_amount tracking worth
+ * trusting, so they're skipped. Field shape is Cliniko's documented shape
+ * as of writing, not verified live — same caveat as fetchClinikoVisitStats.
+ */
+async function fetchClinikoTotalPaid(
+  credentials: ClinikoCredentials,
+  patientId: string | number,
+  headers: Record<string, string>
+): Promise<number> {
+  let totalPaidCents = 0;
+  let url: string | null =
+    `https://api.${credentials.shard}.cliniko.com/v1/patients/${patientId}/invoices?per_page=100`;
+
+  while (url) {
+    const res: Response = await fetch(url, { headers });
+    if (!res.ok) return totalPaidCents; // don't fail the whole sync over one patient's billing history
+    const data = await res.json();
+    for (const invoice of data.invoices ?? []) {
+      if (invoice.archived_at) continue;
+      const total = parseFloat(invoice.total_including_tax ?? "0");
+      const outstanding = parseFloat(invoice.outstanding_amount ?? "0");
+      totalPaidCents += Math.round((total - outstanding) * 100);
+    }
+    url = data.links?.next ?? null;
+  }
+
+  return totalPaidCents;
 }
 
 /**

@@ -17,5 +17,7 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     include: { reviewRequests: { orderBy: { sentAt: "desc" }, take: 1 } },
   });
-  return NextResponse.json({ contacts });
+  const totalPaidCents = contacts.reduce((sum, c) => sum + (c.totalPaidCents ?? 0), 0);
+  const trackedCount = contacts.filter((c) => c.totalPaidCents !== null).length;
+  return NextResponse.json({ contacts, totalPaidCents, trackedCount });
 }

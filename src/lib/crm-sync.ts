@@ -69,6 +69,7 @@ export async function syncCrmConnection(
           email: patient.email,
           visitCount: patient.visitCount,
           lastVisitAt: patient.lastVisitAt,
+          totalPaidCents: patient.totalPaidCents,
           raw: JSON.stringify(patient.raw),
         },
       });
@@ -85,6 +86,7 @@ export async function syncCrmConnection(
           email: patient.email,
           visitCount: patient.visitCount,
           lastVisitAt: patient.lastVisitAt,
+          totalPaidCents: patient.totalPaidCents,
           raw: JSON.stringify(patient.raw),
         },
       });

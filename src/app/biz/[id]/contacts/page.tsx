@@ -13,19 +13,30 @@ type Contact = {
   status: "PENDING" | "SENT" | "FAILED" | "OPTED_OUT";
   visitCount: number;
   lastVisitAt: string | null;
+  totalPaidCents: number | null;
   reviewRequests: { sentAt: string }[];
 };
+
+function formatCents(cents: number): string {
+  return (cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
 
 export default function ContactsPage(props: PageProps<"/biz/[id]/contacts">) {
   const { id: businessId } = use(props.params);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [totalPaidCents, setTotalPaidCents] = useState(0);
+  const [trackedCount, setTrackedCount] = useState(0);
   const [showImport, setShowImport] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   function refresh() {
     fetch(`/api/contacts?businessId=${businessId}`)
       .then((r) => r.json())
-      .then((data) => setContacts(data.contacts));
+      .then((data) => {
+        setContacts(data.contacts);
+        setTotalPaidCents(data.totalPaidCents);
+        setTrackedCount(data.trackedCount);
+      });
   }
 
   useEffect(refresh, [businessId, refreshKey]);
@@ -46,6 +57,18 @@ export default function ContactsPage(props: PageProps<"/biz/[id]/contacts">) {
           {showImport ? "Cancel" : "Import a CSV"}
         </button>
       </div>
+
+      {trackedCount > 0 && (
+        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-[0_4px_20px_rgba(124,92,252,0.06)] flex flex-wrap items-center gap-x-6 gap-y-1">
+          <div>
+            <div className="text-xs text-gray-500">Total collected</div>
+            <div className="text-lg font-semibold tracking-tight">{formatCents(totalPaidCents)}</div>
+          </div>
+          <div className="text-xs text-gray-500">
+            across {trackedCount} contact{trackedCount === 1 ? "" : "s"} with billing data from your CRM
+          </div>
+        </div>
+      )}
 
       {showImport && (
         <CsvImportForm
@@ -70,6 +93,7 @@ export default function ContactsPage(props: PageProps<"/biz/[id]/contacts">) {
                 <th className="py-2.5 pl-4 pr-3">Name</th>
                 <th className="py-2.5 pr-3">Phone</th>
                 <th className="py-2.5 pr-3">Visits</th>
+                <th className="py-2.5 pr-3">Paid</th>
                 <th className="py-2.5 pr-3">Status</th>
                 <th className="py-2.5 pr-4">Last sent</th>
               </tr>
@@ -90,6 +114,11 @@ export default function ContactsPage(props: PageProps<"/biz/[id]/contacts">) {
                   </td>
                   <td className="py-2.5 pr-3 text-xs text-gray-500">
                     <Link href={`/biz/${businessId}/contacts/${c.id}`}>{c.visitCount || "—"}</Link>
+                  </td>
+                  <td className="py-2.5 pr-3 text-xs text-gray-500">
+                    <Link href={`/biz/${businessId}/contacts/${c.id}`}>
+                      {c.totalPaidCents !== null ? formatCents(c.totalPaidCents) : "—"}
+                    </Link>
                   </td>
                   <td className="py-2.5 pr-3">
                     <Link href={`/biz/${businessId}/contacts/${c.id}`}>

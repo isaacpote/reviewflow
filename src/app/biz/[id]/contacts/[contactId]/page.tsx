@@ -21,8 +21,13 @@ type ContactDetail = {
   status: "PENDING" | "SENT" | "FAILED" | "OPTED_OUT";
   visitCount: number;
   lastVisitAt: string | null;
+  totalPaidCents: number | null;
   reviewRequests: ReviewRequest[];
 };
+
+function formatCents(cents: number): string {
+  return (cents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+}
 
 export default function ContactDetailPage(props: PageProps<"/biz/[id]/contacts/[contactId]">) {
   const { id: businessId, contactId } = use(props.params);
@@ -85,6 +90,12 @@ export default function ContactDetailPage(props: PageProps<"/biz/[id]/contacts/[
             <div className="text-xs text-gray-500">Last visit</div>
             <div className="mt-0.5">
               {contact.lastVisitAt ? new Date(contact.lastVisitAt).toLocaleDateString() : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Total paid</div>
+            <div className="mt-0.5">
+              {contact.totalPaidCents !== null ? formatCents(contact.totalPaidCents) : "—"}
             </div>
           </div>
         </div>
