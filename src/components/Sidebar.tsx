@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Phone, Puzzle, LayoutDashboard, ChevronsUpDown, LogOut, Settings, Star, BarChart3, RefreshCw, MessageSquareText } from "lucide-react";
+import { Phone, Puzzle, LayoutDashboard, ChevronsUpDown, LogOut, Settings, Star, BarChart3, RefreshCw, MessageSquareText, Users } from "lucide-react";
 import { useState } from "react";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -26,6 +26,7 @@ export function Sidebar({
 
   const nav = [
     { href: `/biz/${businessId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
+    { href: `/biz/${businessId}/contacts`, label: "Contacts", icon: Users },
     { href: `/biz/${businessId}/number`, label: "Number", icon: Phone },
     { href: `/biz/${businessId}/integrations`, label: "Integrations", icon: Puzzle },
     { href: `/biz/${businessId}/reviews`, label: "Reviews", icon: MessageSquareText },

@@ -1,8 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { parseCsv } from "@/lib/csv";
+import Link from "next/link";
 import { Database, FileSpreadsheet, Webhook as WebhookIcon, RefreshCw } from "lucide-react";
+import { type ContactMapping, FieldMappingInputs } from "@/components/ContactFieldMapping";
 
 type Connection = {
   id: string;
@@ -47,7 +48,7 @@ const TYPE_ICON: Record<Connection["type"], React.ComponentType<{ className?: st
   GOHIGHLEVEL: Database,
 };
 
-type Mode = "CSV" | "WEBHOOK" | "CLINIKO" | "NOOKAL" | "HALAXY" | "SPLOSE" | "FERGUS" | "DOSHII" | null;
+type Mode = "WEBHOOK" | "CLINIKO" | "NOOKAL" | "HALAXY" | "SPLOSE" | "FERGUS" | "DOSHII" | null;
 
 export default function IntegrationsPage(props: PageProps<"/biz/[id]/integrations">) {
   const { id: businessId } = use(props.params);
@@ -167,18 +168,22 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
               onClick={() => setMode("DOSHII")}
             />
             <IntegrationOption
-              icon={FileSpreadsheet}
-              label="Upload a CSV"
-              blurb="Export contacts from any CRM as CSV and upload them here."
-              onClick={() => setMode("CSV")}
-            />
-            <IntegrationOption
               icon={WebhookIcon}
               label="Generic webhook"
               blurb="Get a URL you can point Zapier, Make, or any CRM's outgoing webhook at."
               onClick={() => setMode("WEBHOOK")}
             />
           </div>
+        )}
+
+        {!mode && (
+          <p className="text-xs text-gray-500 mt-3">
+            Exporting contacts from a spreadsheet instead?{" "}
+            <Link href={`/biz/${businessId}/contacts`} className="text-emerald-600 underline">
+              Import a CSV from the Contacts tab
+            </Link>
+            .
+          </p>
         )}
 
         {mode === "CLINIKO" && (
@@ -198,9 +203,6 @@ export default function IntegrationsPage(props: PageProps<"/biz/[id]/integration
         )}
         {mode === "DOSHII" && (
           <DoshiiConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
-        )}
-        {mode === "CSV" && (
-          <CsvConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
         )}
         {mode === "WEBHOOK" && (
           <WebhookConnectionForm businessId={businessId} onDone={() => { setMode(null); refresh(); }} onCancel={() => setMode(null)} />
@@ -274,190 +276,6 @@ function WebhookUrl({ token }: { token: string }) {
   );
 }
 
-type ContactMapping = {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  email: string;
-  last_visit_date?: string;
-  visit_count?: string;
-};
-
-function FieldMappingInputs({
-  mapping,
-  setMapping,
-  sourceOptions,
-  includeVisitFields,
-}: {
-  mapping: ContactMapping;
-  setMapping: (m: ContactMapping) => void;
-  sourceOptions?: string[];
-  includeVisitFields?: boolean;
-}) {
-  const fields: { key: keyof ContactMapping; label: string; required?: boolean }[] = [
-    { key: "phone", label: "Phone number", required: true },
-    { key: "first_name", label: "First name" },
-    { key: "last_name", label: "Last name" },
-    { key: "email", label: "Email" },
-    ...(includeVisitFields
-      ? ([
-          { key: "last_visit_date", label: "Last visit date" },
-          { key: "visit_count", label: "Visit count" },
-        ] as const)
-      : []),
-  ];
-  return (
-    <div className="grid sm:grid-cols-2 gap-3">
-      {fields.map((f) => (
-        <div key={f.key}>
-          <label className="block text-xs font-medium mb-1">
-            {f.label} {f.required && <span className="text-red-500">*</span>}
-          </label>
-          {sourceOptions ? (
-            <select
-              value={mapping[f.key] ?? ""}
-              onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
-            >
-              <option value="">— not mapped —</option>
-              {sourceOptions.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              value={mapping[f.key] ?? ""}
-              onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
-              placeholder={`JSON key, e.g. "${f.key}"`}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-mono shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CsvConnectionForm({
-  businessId,
-  onDone,
-  onCancel,
-}: {
-  businessId: string;
-  onDone: () => void;
-  onCancel: () => void;
-}) {
-  const [name, setName] = useState("CSV import");
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [rows, setRows] = useState<Record<string, string>[]>([]);
-  const [mapping, setMapping] = useState<ContactMapping>({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    email: "",
-    last_visit_date: "",
-    visit_count: "",
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  function handleFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { headers, rows } = parseCsv(String(reader.result));
-      setHeaders(headers);
-      setRows(rows);
-      const guess = (needle: string) =>
-        headers.find((h) => h.toLowerCase().includes(needle)) ?? "";
-      setMapping({
-        first_name: guess("first"),
-        last_name: guess("last"),
-        phone: guess("phone") || guess("mobile"),
-        email: guess("email"),
-        last_visit_date: guess("last visit") || guess("last_visit") || guess("lastvisit"),
-        visit_count: guess("visit count") || guess("visit_count") || guess("visits"),
-      });
-    };
-    reader.readAsText(file);
-  }
-
-  async function submit() {
-    if (!mapping.phone) {
-      setError("Map a phone number column first.");
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/crm/connection", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, type: "CSV", name, fieldMapping: mapping, csvRows: rows }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(JSON.stringify(data.error));
-      onDone();
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4 mt-2 shadow-[0_4px_20px_rgba(124,92,252,0.06)]">
-      <div>
-        <label className="block text-xs font-medium mb-1">Connection name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-[inset_0_1px_2px_rgba(124,92,252,0.06)]"
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium mb-1">CSV file</label>
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-          className="text-sm"
-        />
-        {rows.length > 0 && <p className="text-xs text-gray-500 mt-1">{rows.length} rows detected</p>}
-      </div>
-
-      {headers.length > 0 && (
-        <div>
-          <label className="block text-xs font-medium mb-2">Map columns</label>
-          <FieldMappingInputs mapping={mapping} setMapping={setMapping} sourceOptions={headers} includeVisitFields />
-        </div>
-      )}
-
-      <p className="text-[11px] text-gray-500">
-        Map a visit count or last visit date column and automation can trigger off it, same as a
-        live CRM. Re-upload this same import later with updated numbers — matching contacts by
-        phone number are updated in place, not duplicated.
-      </p>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      <div className="flex gap-2">
-        <button
-          onClick={submit}
-          disabled={submitting || rows.length === 0}
-          className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-5 py-2 disabled:opacity-60"
-        >
-          {submitting ? "Importing…" : `Import ${rows.length || ""} contacts`}
-        </button>
-        <button onClick={onCancel} className="text-sm text-gray-500 px-4 py-2">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function WebhookConnectionForm({
   businessId,
@@ -1068,11 +886,11 @@ function ContactsPreview({ businessId, refreshKey }: { businessId: string; refre
     <section className="border-t border-gray-100 pt-8">
       <p className="text-sm text-gray-500">
         <span className="font-medium text-gray-800">{count}</span> contact
-        {count === 1 ? "" : "s"} imported so far. Head to the{" "}
-        <a href={`/biz/${businessId}/dashboard`} className="text-emerald-600 underline">
-          dashboard
-        </a>{" "}
-        to send review requests.
+        {count === 1 ? "" : "s"} imported so far. Head to{" "}
+        <Link href={`/biz/${businessId}/contacts`} className="text-emerald-600 underline">
+          Contacts
+        </Link>{" "}
+        to see them, or the dashboard to send review requests.
       </p>
     </section>
   );
